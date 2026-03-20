@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  events    Event[]
+}
+
+model Event {
+  id         String     @id @default(cuid())
+  name       String
+  date       DateTime
+  venue      String
+  stageWidth Int        @default(800)
+  stageDepth Int        @default(400)
+  shareToken String     @unique @default(cuid())
+  createdBy  String
+  user       User       @relation(fields: [createdBy], references: [id])
+  positions  Position[]
+  artists    Artist[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+model Position {
+  id      String   @id @default(cuid())
+  eventId String
+  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name    String
+  x       Int      @default(100)
+  y       Int      @default(100)
+  width   Int      @default(120)
+  height  Int      @default(80)
+  color   String   @default("#00e5ff")
+  artists Artist[]
+}
+
+model Artist {
+  id         String    @id @default(cuid())
+  eventId    String
+  event      Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  positionId String?
+  position   Position? @relation(fields: [positionId], references: [id], onDelete: SetNull)
+  name       String
+  startTime  String
+  endTime    String
+  tableMin   String?
+  gearBrings String    @default("")
+  venueNeeds String    @default("")
+  routing    String    @default("")
+  notes      String    @default("")
+  sortOrder  Int       @default(0)
+}
