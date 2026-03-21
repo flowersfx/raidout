@@ -27,6 +27,26 @@ function SortablePositionRow({ position }: { position: Position }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: position.id });
 
+  const dragHandle = (
+    <button
+      {...attributes}
+      {...listeners}
+      className="flex-shrink-0 cursor-grab active:cursor-grabbing text-dim hover:text-muted touch-none"
+      tabIndex={-1}
+      aria-label="Drag to reorder"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor">
+        <circle cx="4" cy="3" r="1.5" />
+        <circle cx="8" cy="3" r="1.5" />
+        <circle cx="4" cy="8" r="1.5" />
+        <circle cx="8" cy="8" r="1.5" />
+        <circle cx="4" cy="13" r="1.5" />
+        <circle cx="8" cy="13" r="1.5" />
+      </svg>
+    </button>
+  );
+
   return (
     <div
       ref={setNodeRef}
@@ -35,27 +55,8 @@ function SortablePositionRow({ position }: { position: Position }) {
         transition,
         opacity: isDragging ? 0.4 : 1,
       }}
-      className="flex items-start gap-1"
     >
-      <button
-        {...attributes}
-        {...listeners}
-        className="mt-2.5 flex-shrink-0 cursor-grab active:cursor-grabbing text-dim hover:text-muted touch-none"
-        tabIndex={-1}
-        aria-label="Drag to reorder"
-      >
-        <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor">
-          <circle cx="4" cy="3" r="1.5" />
-          <circle cx="8" cy="3" r="1.5" />
-          <circle cx="4" cy="8" r="1.5" />
-          <circle cx="8" cy="8" r="1.5" />
-          <circle cx="4" cy="13" r="1.5" />
-          <circle cx="8" cy="13" r="1.5" />
-        </svg>
-      </button>
-      <div className="flex-1 min-w-0">
-        <PositionForm position={position} />
-      </div>
+      <PositionForm position={position} dragHandle={dragHandle} />
     </div>
   );
 }

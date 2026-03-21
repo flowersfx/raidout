@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, useRef, useEffect } from "react";
+import React, { useId, useState, useRef, useEffect } from "react";
 import { useEventStore } from "@/store/eventStore";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -9,12 +9,14 @@ import type { Position } from "@/types/models";
 
 interface Props {
   position: Position;
+  dragHandle?: React.ReactNode;
 }
 
-export function PositionForm({ position }: Props) {
+export function PositionForm({ position, dragHandle }: Props) {
   const { patchPosition, removePosition, clonePosition, selectedPositionIds, setSelectedPosition } = useEventStore();
   const uid = useId();
   const isSelected = selectedPositionIds.has(position.id);
+  const [collapsed, setCollapsed] = useState(true);
   const [colorOpen, setColorOpen] = useState(false);
   const colorRef = useRef<HTMLDivElement>(null);
 
@@ -41,110 +43,134 @@ export function PositionForm({ position }: Props) {
       onClick={() => setSelectedPosition(isSelected ? null : position.id)}
     >
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-      <div className="flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
-        {/* Color swatch / inline picker */}
-        <div ref={colorRef} className="relative flex items-center shrink-0">
-          {colorOpen ? (
-            <div className="flex gap-1">
+      <div className="flex items-center justify-between gap-2 h-7" onClick={(e) => e.stopPropagation()}>
+        {/* Drag handle (injected by sortable parent) */}
+        {dragHandle}
+        {/* Color swatch — clicking opens the palette in place of the other controls */}
+        <div ref={colorRef} className="flex items-center shrink-0">
+          <button
+            type="button"
+            title="Change color"
+            onClick={() => setColorOpen(true)}
+            className={`w-4 h-4 rounded-full cursor-pointer hover:scale-125 transition-transform border border-transparent${colorOpen ? " opacity-50" : ""}`}
+            style={{ backgroundColor: position.color }}
+          />
+          {colorOpen && (
+            <div className="flex items-center gap-1.5 ml-1.5">
               {POSITION_COLORS.map((c) => (
                 <button
                   key={c}
                   type="button"
                   title={c}
-                  onClick={() => {
-                    patch({ color: c });
-                    setColorOpen(false);
-                  }}
+                  onClick={() => { patch({ color: c }); setColorOpen(false); }}
                   className="w-4 h-4 rounded-full border border-transparent hover:scale-125 transition-transform cursor-pointer"
                   style={{ backgroundColor: c, borderColor: c === position.color ? "white" : "transparent" }}
                 />
               ))}
             </div>
-          ) : (
-            <button
-              type="button"
-              title="Change color"
-              onClick={() => setColorOpen(true)}
-              className="w-4 h-4 rounded-full cursor-pointer hover:scale-125 transition-transform border border-transparent"
-              style={{ backgroundColor: position.color }}
-            />
           )}
         </div>
-        <input
-          className="bg-transparent border-none text-sm font-semibold text-text focus:outline-none w-full"
-          value={position.name}
-          onChange={(e) => patch({ name: e.target.value })}
-          placeholder="Position name"
-        />
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => clonePosition(position.id)}
-          title="Clone position"
-        >
-          ⧉
-        </Button>
-        <Button
-          variant="danger"
-          size="sm"
-          onClick={() => removePosition(position.id)}
-          title="Remove position"
-        >
-          ✕
-        </Button>
+        {colorOpen ? (
+          /* Spacer to push buttons out of view while palette is open */
+          <div className="flex-1" />
+        ) : (
+          /* Normal controls */
+          <>
+            <input
+              className="bg-transparent border-none text-sm font-semibold text-text focus:outline-none w-full"
+              value={position.name}
+              onChange={(e) => patch({ name: e.target.value })}
+              placeholder="Position name"
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setCollapsed((c) => !c)}
+              title={collapsed ? "Expand" : "Collapse"}
+            >
+              <svg
+                width="10" height="10" viewBox="0 0 10 10"
+                fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+                style={{ transition: "transform 0.15s", transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)" }}
+              >
+                <polyline points="2,3 5,7 8,3" />
+              </svg>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => clonePosition(position.id)}
+              title="Clone position"
+            >
+              ⧉
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => removePosition(position.id)}
+              title="Remove position"
+            >
+              ✕
+            </Button>
+          </>
+        )}
       </div>
 
-<div className="grid grid-cols-3 gap-1.5">
-        <Input
-          id={`${uid}-x`}
-          label="X"
-          inline
-          type="number"
-          value={String(position.x)}
-          onChange={(e) => patch({ x: Number(e.target.value) })}
-          min={0}
-        />
-        <Input
-          id={`${uid}-y`}
-          label="Y"
-          inline
-          type="number"
-          value={String(position.y)}
-          onChange={(e) => patch({ y: Number(e.target.value) })}
-          min={0}
-        />
-        <Input
-          id={`${uid}-rot`}
-          label="R°"
-          inline
-          type="number"
-          className="show-spin"
-          value={String(position.rotation)}
-          onChange={(e) => patch({ rotation: Number(e.target.value) })}
-          min={-180}
-          max={180}
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-1.5">
-        <Input
-          id={`${uid}-w`}
-          label="W"
-          inline
-          type="number"
-          value={String(position.width)}
-          onChange={(e) => patch({ width: Number(e.target.value) })}
-          min={20}
-        />
-        <Input
-          id={`${uid}-h`}
-          label="H"
-          inline
-          type="number"
-          value={String(position.height)}
-          onChange={(e) => patch({ height: Number(e.target.value) })}
-          min={20}
-        />
-      </div>
+      {!collapsed && (
+        <>
+          <div className="grid grid-cols-3 gap-1.5">
+            <Input
+              id={`${uid}-x`}
+              label="X"
+              inline
+              type="number"
+              value={String(position.x)}
+              onChange={(e) => patch({ x: Number(e.target.value) })}
+              min={0}
+            />
+            <Input
+              id={`${uid}-y`}
+              label="Y"
+              inline
+              type="number"
+              value={String(position.y)}
+              onChange={(e) => patch({ y: Number(e.target.value) })}
+              min={0}
+            />
+            <Input
+              id={`${uid}-rot`}
+              label="R°"
+              inline
+              type="number"
+              className="show-spin"
+              value={String(position.rotation)}
+              onChange={(e) => patch({ rotation: Number(e.target.value) })}
+              min={-180}
+              max={180}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            <Input
+              id={`${uid}-w`}
+              label="W"
+              inline
+              type="number"
+              value={String(position.width)}
+              onChange={(e) => patch({ width: Number(e.target.value) })}
+              min={20}
+            />
+            <Input
+              id={`${uid}-h`}
+              label="H"
+              inline
+              type="number"
+              value={String(position.height)}
+              onChange={(e) => patch({ height: Number(e.target.value) })}
+              min={20}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 }
