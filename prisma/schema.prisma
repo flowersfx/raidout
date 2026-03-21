@@ -40,8 +40,9 @@ model Position {
   y       Int      @default(100)
   width   Int      @default(120)
   height  Int      @default(80)
-  color   String   @default("#00e5ff")
-  artists Artist[]
+  color    String   @default("#00e5ff")
+  rotation Int      @default(0)
+  artists  Artist[]
 }
 
 model Artist {

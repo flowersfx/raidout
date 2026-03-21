@@ -29,6 +29,7 @@ export function SetupTab() {
       width: 140,
       height: 80,
       color: POSITION_COLORS[colorIndex],
+      rotation: 0,
     });
   }
 

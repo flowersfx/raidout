@@ -86,9 +86,12 @@ export function StageSVG({
       {positions.map((pos) => {
         const assignedArtists = artists.filter((a) => a.positionId === pos.id);
         const firstGearLine = assignedArtists[0]?.gearBrings?.split("\n")[0] ?? "";
+        const cx = pos.x + pos.width / 2;
+        const cy = pos.y + pos.height / 2;
+        const rotation = pos.rotation ?? 0;
 
         return (
-          <g key={pos.id}>
+          <g key={pos.id} transform={rotation ? `rotate(${rotation} ${cx} ${cy})` : undefined}>
             <rect
               x={pos.x}
               y={pos.y}

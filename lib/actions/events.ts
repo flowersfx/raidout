@@ -121,6 +121,7 @@ export async function saveEventSnapshot(snapshot: {
           width: p.width,
           height: p.height,
           color: p.color,
+          rotation: p.rotation ?? 0,
         },
         update: {
           name: p.name,
@@ -129,6 +130,7 @@ export async function saveEventSnapshot(snapshot: {
           width: p.width,
           height: p.height,
           color: p.color,
+          rotation: p.rotation ?? 0,
         },
       });
     }

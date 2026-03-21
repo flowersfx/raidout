@@ -12,20 +12,20 @@ Auto-save replaces explicit save buttons everywhere in the editor.
 
 | Concern | Choice | Why |
 |---|---|---|
-| Framework | Next.js 14 App Router | Server components for shareable view, server actions for mutations |
+| Framework | Next.js 16 App Router | Server components for shareable view, server actions for mutations |
 | DB | SQLite + Prisma | Zero-config local, one-line swap to Postgres |
-| Styling | Tailwind CSS + `clsx`/`tailwind-merge` | Utility-first, easy dark/print modes |
-| Drag (stage positions) | Custom SVG mouse handlers | Spec says so; avoids a whole library for one interaction |
+| Styling | Tailwind CSS 4 + `clsx`/`tailwind-merge` | Utility-first, easy dark/print modes |
+| Drag (stage positions) | Custom SVG mouse handlers via `useStageDrag` | Avoids a whole library for one interaction |
 | Drag (artist list reorder) | `@dnd-kit/sortable` | Clean React DnD, no DOM hacks, accessible |
 | State (editor) | Zustand | Share state across 5 tabs without prop drilling or context gymnastics |
 | PDF export | Puppeteer via `@sparticuz/chromium-min` | Reuses same HTML/CSS/SVG views exactly — no separate layout to maintain |
 | Font (monospace data) | `JetBrains Mono` via `next/font/google` | Legible at dense sizes, free |
 | Validation | Zod | Schema-first, works in server actions and API routes |
-| Auth (Phase 2) | NextAuth.js v5 (beta) / Auth.js | Email+password or magic link, minimal setup |
+| Auth (Phase 9) | NextAuth.js v5 (beta) / Auth.js | Email+password or magic link, minimal setup |
 
 ---
 
-## Filesystem Structure
+## Filesystem Structure (actual)
 
 ```
 raidout/
@@ -39,16 +39,10 @@ raidout/
 │   │   │   └── page.tsx              # Create event form (name, date, venue, dimensions)
 │   │   └── [id]/
 │   │       ├── page.tsx              # Event editor shell — reads event, hydrates Zustand
-│   │       ├── loading.tsx           # Skeleton for editor load
 │   │       └── share/
 │   │           ├── page.tsx          # Public read-only consolidated rider (server component)
 │   │           └── pdf/
 │   │               └── route.ts      # GET → puppeteer renders /share → streams PDF
-│   │
-│   └── api/
-│       └── auth/
-│           └── [...nextauth]/
-│               └── route.ts          # NextAuth handler (Phase 2)
 │
 ├── components/
 │   │
@@ -57,9 +51,7 @@ raidout/
 │   │   ├── Input.tsx
 │   │   ├── Textarea.tsx
 │   │   ├── Badge.tsx                 # Color dot + label — used for position tags
-│   │   ├── Tabs.tsx                  # Headless tab primitives
-│   │   ├── ColorPicker.tsx           # Swatch grid for position colors
-│   │   └── Tooltip.tsx
+│   │   └── ColorPicker.tsx           # Swatch grid for position colors
 │   │
 │   ├── editor/                       # Event editor: the core product UI
 │   │   ├── EventEditor.tsx           # Tab shell, reads from Zustand, renders active tab
@@ -73,8 +65,7 @@ raidout/
 │   │   │   └── RunningOrderTab.tsx   # Timeline bar + detailed list + changeover warnings
 │   │   │
 │   │   ├── stage/
-│   │   │   ├── StageSVG.tsx          # Shared SVG renderer (used in Setup preview + Plot tab + share view + PDF)
-│   │   │   ├── DraggablePosition.tsx # <rect> with onMouseDown drag logic; edit mode only
+│   │   │   ├── StageSVG.tsx          # Shared SVG renderer (edit + view modes; drag handled via useStageDrag)
 │   │   │   └── PositionForm.tsx      # Inline form: name, color, X/Y/W/H inputs
 │   │   │
 │   │   ├── artist/
@@ -87,21 +78,18 @@ raidout/
 │   │   │
 │   │   └── running-order/
 │   │       ├── TimelineBar.tsx       # Horizontal SVG/div timeline, color-coded blocks
-│   │       ├── RunningOrderList.tsx  # Tabular chronological list
 │   │       └── ChangeoverBadge.tsx   # Gap indicator: green/yellow/red
 │   │
 │   └── share/
 │       ├── ShareView.tsx             # Full consolidated read-only view (composes sub-views)
-│       └── DownloadButton.tsx        # Client component: triggers /event/[id]/share/pdf
+│       ├── DownloadButton.tsx        # Client component: triggers /event/[id]/share/pdf
+│       └── PrintButton.tsx           # Client component: triggers browser print dialog
 │
 ├── lib/
 │   ├── db.ts                         # Prisma client singleton (globalThis pattern for dev HMR)
-│   ├── auth.ts                       # NextAuth config + session helpers (Phase 2)
 │   │
-│   ├── actions/                      # Next.js Server Actions — all DB writes live here
-│   │   ├── events.ts                 # createEvent, updateEvent, deleteEvent
-│   │   ├── artists.ts                # createArtist, updateArtist, deleteArtist, reorderArtists
-│   │   └── positions.ts              # createPosition, updatePosition, deletePosition
+│   ├── actions/
+│   │   └── events.ts                 # All server actions: event/position/artist CRUD consolidated here
 │   │
 │   └── utils/
 │       ├── cn.ts                     # clsx + tailwind-merge helper
@@ -122,20 +110,21 @@ raidout/
 │   ├── seed.ts                       # Dev seed: one event, 3 artists, 2 positions
 │   └── migrations/                   # Auto-generated by prisma migrate dev
 │
-├── types/
-│   ├── models.ts                     # TypeScript mirrors of Prisma models (for client use)
-│   └── next-auth.d.ts                # Session type augmentation (Phase 2)
-│
-├── public/
-│   └── (empty — no static assets needed at MVP)
-│
-├── .env.local                        # DATABASE_URL, NEXTAUTH_SECRET (gitignored)
-├── .env.example                      # Template for above
-├── tailwind.config.ts
+├── .env                              # DATABASE_URL (gitignored)
 ├── next.config.ts
 ├── tsconfig.json
 └── package.json
 ```
+
+### Deviations from original plan
+
+- **No `DraggablePosition.tsx`** — drag logic lives inline in `StageSVG.tsx` via `useStageDrag` hook
+- **No `RunningOrderList.tsx`** — tabular list embedded directly in `RunningOrderTab.tsx`
+- **No separate `lib/actions/artists.ts` or `positions.ts`** — all mutations consolidated into `lib/actions/events.ts`
+- **No `types/` directory** — Prisma-generated types used directly on the client
+- **No `Tabs.tsx` or `Tooltip.tsx` UI primitives** — tabs handled inline in `EventEditor.tsx`, tooltips not needed
+- **No `loading.tsx`** — editor loads fast enough without a skeleton
+- **Extra `PrintButton.tsx`** in share components (not in original plan) — triggers browser print dialog
 
 ---
 
@@ -166,7 +155,7 @@ npm install puppeteer-core @sparticuz/chromium-min
 # NOTE: puppeteer-core + chromium-min keeps the install lean for Vercel
 # In dev: use full puppeteer instead (npm install -D puppeteer)
 
-# Auth (Phase 2 only — don't install until you reach it)
+# Auth (Phase 9 only — don't install until you reach it)
 # npm install next-auth@beta
 ```
 
@@ -178,73 +167,69 @@ aesthetic defaults. Add if it gets painful.
 
 ## Build Order (matching SPEC MVP scope)
 
-### Phase 1 — Foundation
+### Phase 1 — Foundation ✅
 1. `prisma/schema.prisma` — exact schema from spec
 2. `prisma/seed.ts` — seed data for dev iteration
 3. `lib/db.ts` — Prisma singleton
-4. `store/eventStore.ts` — Zustand store skeleton
+4. `store/eventStore.ts` — Zustand store
 5. `lib/utils/cn.ts`, `time.ts`, `routing.ts`
 6. `app/globals.css` — dark theme base, print overrides, monospace data class
 
-### Phase 2 — Event CRUD + Setup Tab
-7. `lib/actions/events.ts` + `lib/actions/positions.ts`
+### Phase 2 — Event CRUD + Setup Tab ✅
+7. `lib/actions/events.ts` (includes position + artist mutations)
 8. `app/page.tsx` — dashboard with event list
 9. `app/event/new/page.tsx` — create event form
 10. `app/event/[id]/page.tsx` — editor shell (tabs, loads data into store)
 11. `components/editor/tabs/SetupTab.tsx`
-12. `components/editor/stage/StageSVG.tsx` — write this once, reuse everywhere
-13. `components/editor/stage/DraggablePosition.tsx` — SVG drag logic via `useStageDrag`
-14. `components/editor/stage/PositionForm.tsx`
-15. `hooks/useAutoSave.ts` + `components/editor/AutoSaveIndicator.tsx`
+12. `components/editor/stage/StageSVG.tsx` — write this once, reuse everywhere (drag logic via `useStageDrag`)
+13. `components/editor/stage/PositionForm.tsx`
+14. `hooks/useAutoSave.ts` + `components/editor/AutoSaveIndicator.tsx`
 
-### Phase 3 — Artist CRUD
-16. `lib/actions/artists.ts`
-17. `components/editor/artist/ArtistCard.tsx` + `ArtistForm.tsx`
-18. `components/editor/tabs/ArtistsTab.tsx` — with `@dnd-kit` sort
+### Phase 3 — Artist CRUD ✅
+15. `components/editor/artist/ArtistCard.tsx` + `ArtistForm.tsx`
+16. `components/editor/tabs/ArtistsTab.tsx` — with `@dnd-kit` sort
 
-### Phase 4 — Stage Plot View
-19. `components/editor/tabs/StagePlotTab.tsx`
+### Phase 4 — Stage Plot View ✅
+17. `components/editor/tabs/StagePlotTab.tsx`
     — Full-size `StageSVG` in read-only mode
     — Annotate gear near positions
     — FOH label, grid lines
 
-### Phase 5 — FOH Summary
-20. `lib/utils/routing.ts` — routing line parser
-21. `components/editor/foh/FOHArtistCard.tsx`
-22. `components/editor/foh/MasterInputList.tsx`
-23. `components/editor/tabs/FOHTab.tsx`
+### Phase 5 — FOH Summary ✅
+18. `components/editor/foh/FOHArtistCard.tsx`
+19. `components/editor/foh/MasterInputList.tsx`
+20. `components/editor/tabs/FOHTab.tsx`
 
-### Phase 6 — Running Order
-24. `hooks/useChangeovers.ts`
-25. `components/editor/running-order/TimelineBar.tsx`
-26. `components/editor/running-order/RunningOrderList.tsx`
-27. `components/editor/running-order/ChangeoverBadge.tsx`
-28. `components/editor/tabs/RunningOrderTab.tsx`
+### Phase 6 — Running Order ✅
+21. `hooks/useChangeovers.ts`
+22. `components/editor/running-order/TimelineBar.tsx`
+23. `components/editor/running-order/ChangeoverBadge.tsx`
+24. `components/editor/tabs/RunningOrderTab.tsx` (includes tabular list inline)
 
-### Phase 7 — Shareable Link
-29. `app/event/[id]/share/page.tsx` — server component, validates shareToken
-30. `components/share/ShareView.tsx` — composes StageSVG + FOH cards + running order
-31. `components/share/DownloadButton.tsx`
+### Phase 7 — Shareable Link ✅
+25. `app/event/[id]/share/page.tsx` — server component, validates shareToken
+26. `components/share/ShareView.tsx` — composes StageSVG + FOH cards + running order
+27. `components/share/DownloadButton.tsx` + `PrintButton.tsx`
 
-### Phase 8 — PDF Export
-32. `app/event/[id]/share/pdf/route.ts`
+### Phase 8 — PDF Export ✅
+28. `app/event/[id]/share/pdf/route.ts`
     — Spawns puppeteer, navigates to `/event/[id]/share?print=1`
     — `?print=1` param triggers white-bg print styles in globals.css
     — Streams PDF response
 
-### Phase 9 — Auth
-33. `lib/auth.ts` + `app/api/auth/[...nextauth]/route.ts`
-34. Middleware for protected routes
-35. Login page + session display in dashboard
-36. Swap hardcoded dev user for `session.user.id`
+### Phase 9 — Auth ⬜
+29. `lib/auth.ts` + `app/api/auth/[...nextauth]/route.ts`
+30. Middleware for protected routes
+31. Login page + session display in dashboard
+32. Swap hardcoded dev user for `session.user.id`
 
 ---
 
 ## Key Implementation Notes
 
 ### StageSVG.tsx — reuse everywhere
-Pass `mode: 'edit' | 'view'` prop. In edit mode, positions are `DraggablePosition`
-components. In view mode, plain SVG `<rect>` elements. Same component renders in the
+Pass `mode: 'edit' | 'view'` prop. In edit mode, positions are draggable via `useStageDrag`.
+In view mode, plain SVG `<rect>` elements. Same component renders in the
 editor, the share page, and the puppeteer PDF render.
 
 ### Auto-save pattern
