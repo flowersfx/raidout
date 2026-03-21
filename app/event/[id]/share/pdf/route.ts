@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getEvent } from "@/lib/actions/events";
 
+export const dynamic = "force-dynamic";
 export const maxDuration = 60; // seconds — PDF generation needs time on Vercel
 
 export async function GET(
