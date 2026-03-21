@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getEvents } from "@/lib/actions/events";
 import { Button } from "@/components/ui/Button";
+import { ImportButton } from "@/components/ImportButton";
 
 export default async function Dashboard() {
   const events = await getEvents();
@@ -14,9 +15,12 @@ export default async function Dashboard() {
           </h1>
           <p className="text-sm text-muted mt-0.5">Stage tech rider consolidation</p>
         </div>
-        <Link href="/event/new">
-          <Button>+ New Event</Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <ImportButton />
+          <Link href="/event/new">
+            <Button>+ New Event</Button>
+          </Link>
+        </div>
       </header>
 
       {events.length === 0 ? (
@@ -29,10 +33,10 @@ export default async function Dashboard() {
       ) : (
         <ul className="flex flex-col gap-3">
           {events.map((event) => (
-            <li key={event.id}>
+            <li key={event.id} className="flex items-center gap-2">
               <Link
                 href={`/event/${event.id}`}
-                className="flex items-center justify-between bg-surface border border-border rounded-lg px-5 py-4 hover:border-accent/40 hover:bg-raised transition-colors group"
+                className="flex-1 flex items-center justify-between bg-surface border border-border rounded-lg px-5 py-4 hover:border-accent/40 hover:bg-raised transition-colors group"
               >
                 <div>
                   <p className="font-semibold text-text group-hover:text-accent transition-colors">
@@ -49,6 +53,14 @@ export default async function Dashboard() {
                 </div>
                 <span className="text-dim text-xs mono">→</span>
               </Link>
+              <a
+                href={`/api/events/${event.id}/export`}
+                download
+                title="Export event as JSON"
+                className="inline-flex items-center px-3 py-2 text-xs font-medium text-muted border border-border rounded-lg hover:text-text hover:bg-raised transition-colors"
+              >
+                ↓ Export
+              </a>
             </li>
           ))}
         </ul>

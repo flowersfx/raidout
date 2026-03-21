@@ -2,17 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { getOrCreateUserId } from "@/lib/identity";
 import type { Event, Position, Artist } from "@/types/models";
 
-// Dev user stub — replaced by session.user.id once auth is wired up
-const DEV_USER_ID = async () => {
-  const user = await prisma.user.findUnique({ where: { email: "dev@raidout.local" } });
-  if (!user) throw new Error("Dev user not found — run: npx prisma db seed");
-  return user.id;
-};
-
 export async function getEvents() {
-  const userId = await DEV_USER_ID();
+  const userId = await getOrCreateUserId();
   return prisma.event.findMany({
     where: { createdBy: userId },
     orderBy: { date: "desc" },
@@ -44,7 +38,7 @@ export async function createEvent(data: {
   date: string;
   venue: string;
 }) {
-  const userId = await DEV_USER_ID();
+  const userId = await getOrCreateUserId();
   const event = await prisma.event.create({
     data: {
       name: data.name,
@@ -179,5 +173,108 @@ export async function saveEventSnapshot(snapshot: {
         },
       });
     }
+  });
+}
+
+type EventExportPosition = {
+  _ref: string;
+  name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: string;
+  rotation: number;
+};
+
+type EventExportArtist = {
+  name: string;
+  positionRef: string | null;
+  startTime: string;
+  endTime: string;
+  tableMin: string | null;
+  gearBrings: string;
+  venueNeeds: string;
+  routing: string;
+  notes: string;
+  extraSlots: string;
+  arrivalTime: string | null;
+  soundcheckStart: string | null;
+  soundcheckEnd: string | null;
+  sortOrder: number;
+};
+
+export type EventExport = {
+  version: number;
+  exportedAt: string;
+  event: {
+    name: string;
+    date: string | Date;
+    venue: string;
+    stageWidth: number;
+    stageDepth: number;
+  };
+  positions: EventExportPosition[];
+  artists: EventExportArtist[];
+};
+
+export async function importEvent(data: EventExport) {
+  const userId = await getOrCreateUserId();
+
+  return prisma.$transaction(async (tx) => {
+    const event = await tx.event.create({
+      data: {
+        name: data.event.name,
+        date: new Date(data.event.date),
+        venue: data.event.venue,
+        stageWidth: data.event.stageWidth,
+        stageDepth: data.event.stageDepth,
+        createdBy: userId,
+      },
+    });
+
+    // Build a map from export _ref -> new position id
+    const refToId = new Map<string, string>();
+
+    for (const p of data.positions) {
+      const created = await tx.position.create({
+        data: {
+          eventId: event.id,
+          name: p.name,
+          x: p.x,
+          y: p.y,
+          width: p.width,
+          height: p.height,
+          color: p.color,
+          rotation: p.rotation,
+        },
+      });
+      refToId.set(p._ref, created.id);
+    }
+
+    for (const a of data.artists) {
+      await tx.artist.create({
+        data: {
+          eventId: event.id,
+          positionId: a.positionRef ? (refToId.get(a.positionRef) ?? null) : null,
+          name: a.name,
+          startTime: a.startTime,
+          endTime: a.endTime,
+          tableMin: a.tableMin,
+          gearBrings: a.gearBrings,
+          venueNeeds: a.venueNeeds,
+          routing: a.routing,
+          notes: a.notes,
+          extraSlots: a.extraSlots ?? "[]",
+          arrivalTime: a.arrivalTime,
+          soundcheckStart: a.soundcheckStart,
+          soundcheckEnd: a.soundcheckEnd,
+          sortOrder: a.sortOrder,
+        },
+      });
+    }
+
+    revalidatePath("/");
+    return event.id;
   });
 }
