@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { useEventStore } from "@/store/eventStore";
 import { useStageDrag } from "@/hooks/useStageDrag";
+import { useStageHandles } from "@/hooks/useStageHandles";
 import type { Position, Artist } from "@/types/models";
 
 interface Props {
@@ -19,8 +20,10 @@ const GRID_STEP = 100; // grid lines every 100 cm
 const FOH_LABEL_HEIGHT = 24;
 const POS_NAME_SIZE = 10;
 const POS_NAME_Y = 14; // offset from top of rect
+const DIM_SIZE = 7;    // dimensions label font size
+const DIM_Y = 24;      // offset from top of rect
 const ARTIST_SIZE = 8.5;
-const ARTIST_START_Y = 28; // first artist offset from top
+const ARTIST_START_Y = 37; // first artist offset from top
 const ARTIST_LINE_H = 13; // spacing between artist lines
 const PADDING_BOTTOM = 2; // breathing room at bottom of rect
 
@@ -74,6 +77,7 @@ export function StageSVG({
   const store = useEventStore();
   const svgRef = useRef<SVGSVGElement>(null);
   const { onMouseDown: onDragMouseDown, onMouseMove: onDragMouseMove, onMouseUp: onDragMouseUp, didDragRef } = useStageDrag(svgRef);
+  const { onResizeMouseDown, onRotateMouseDown, onHandleMouseMove, onHandleMouseUp, resizeRef, rotateRef } = useStageHandles(svgRef);
 
   const positions = externalPositions ?? store.positions;
   const artists = externalArtists ?? store.artists;
@@ -111,6 +115,11 @@ export function StageSVG({
     if (mode !== "edit") return;
 
     function handleMouseMove(e: MouseEvent) {
+      // Handle operations (resize / rotate) take priority
+      if (resizeRef.current || rotateRef.current) {
+        onHandleMouseMove(e);
+        return;
+      }
       // Selection rectangle
       if (selRectRef.current) {
         const pt = getSVGPoint(e.clientX, e.clientY);
@@ -129,6 +138,10 @@ export function StageSVG({
     }
 
     function handleMouseUp(e: MouseEvent) {
+      if (resizeRef.current || rotateRef.current) {
+        onHandleMouseUp();
+        return;
+      }
       if (selRectRef.current) {
         if (isMarqueeRef.current) {
           // Compute which positions intersect the rectangle
@@ -176,7 +189,7 @@ export function StageSVG({
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [mode, onDragMouseMove, onDragMouseUp, getSVGPoint, positions, store]);
+  }, [mode, onDragMouseMove, onDragMouseUp, onHandleMouseMove, onHandleMouseUp, getSVGPoint, positions, store, resizeRef, rotateRef]);
 
   const totalHeight = stageDepth + FOH_LABEL_HEIGHT;
 
@@ -373,6 +386,18 @@ export function StageSVG({
               >
                 {truncate(pos.name, pos.width, POS_NAME_SIZE)}
               </text>
+              {/* Dimensions */}
+              <text
+                x={pos.x + pos.width / 2}
+                y={pos.y + DIM_Y}
+                textAnchor="middle"
+                fontSize={DIM_SIZE}
+                fill={pos.color}
+                opacity={0.5}
+                style={{ pointerEvents: "none", userSelect: "none" }}
+              >
+                {pos.width}x{pos.height}cm
+              </text>
               {/* Artist names */}
               {wrappedArtists ? (
                 // Selected mode: render wrapped lines
@@ -455,6 +480,56 @@ export function StageSVG({
           </g>
         );
       })}
+
+      {/* Resize + rotate handles for a single selected position */}
+      {mode === "edit" && store.selectedPositionIds.size === 1 && (() => {
+        const pos = positions.find((p) => store.selectedPositionIds.has(p.id));
+        if (!pos) return null;
+        const cx = pos.x + pos.width / 2;
+        const cy = pos.y + pos.height / 2;
+        const rotation = pos.rotation ?? 0;
+        const H = 7;  // handle square size in SVG units
+        const R = 4;  // rotate circle radius
+        const ROPE = 14; // distance of rotate handle above top edge
+
+        return (
+          <g key="handles" transform={rotation ? `rotate(${rotation} ${cx} ${cy})` : undefined}>
+            {/* Rotate connector line */}
+            <line
+              x1={cx} y1={pos.y - H / 2}
+              x2={cx} y2={pos.y - ROPE}
+              stroke={pos.color} strokeWidth={1} opacity={0.5}
+              style={{ pointerEvents: "none" }}
+            />
+            {/* Rotate handle */}
+            <circle
+              cx={cx} cy={pos.y - ROPE}
+              r={R}
+              fill="#1a1a1a" stroke={pos.color} strokeWidth={1.5}
+              style={{ cursor: "grab" }}
+              onMouseDown={(e) => onRotateMouseDown(e, pos)}
+            />
+            {/* Corner resize handles */}
+            {(["nw", "ne", "se", "sw"] as const).map((corner) => {
+              const hx = corner.includes("e") ? pos.x + pos.width - H / 2 : pos.x - H / 2;
+              const hy = corner.includes("s") ? pos.y + pos.height - H / 2 : pos.y - H / 2;
+              const cursor =
+                corner === "nw" || corner === "se" ? "nwse-resize" : "nesw-resize";
+              return (
+                <rect
+                  key={corner}
+                  x={hx} y={hy}
+                  width={H} height={H}
+                  rx={2}
+                  fill="#1a1a1a" stroke={pos.color} strokeWidth={1.5}
+                  style={{ cursor }}
+                  onMouseDown={(e) => onResizeMouseDown(e, pos, corner)}
+                />
+              );
+            })}
+          </g>
+        );
+      })()}
 
       {/* Selection rectangle */}
       {selDisplay && selDisplay.width > 0 && selDisplay.height > 0 && (
