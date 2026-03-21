@@ -8,6 +8,7 @@ type Tab = "setup" | "artists" | "plot" | "foh" | "order";
 interface DeletedPosition {
   position: Position;
   artists: Artist[];
+  index: number;
 }
 
 interface EventStore {
@@ -16,8 +17,8 @@ interface EventStore {
   positions: Position[];
   artists: Artist[];
 
-  // Undo state
-  lastDeletedPosition: DeletedPosition | null;
+  // Undo state (batch — supports single or multi-delete)
+  lastDeletedPositions: DeletedPosition[];
 
   // UI state
   activeTab: Tab;
@@ -40,7 +41,9 @@ interface EventStore {
   clonePosition(id: string): void;
   patchPosition(id: string, fields: Partial<Position>): void;
   removePosition(id: string): void;
+  removeSelectedPositions(): void;
   undoRemovePosition(): void;
+  reorderPositions(ids: string[]): void;
 
   // Artist actions
   setArtists(a: Artist[]): void;
@@ -67,7 +70,7 @@ export const useEventStore = create<EventStore>((set) => ({
   event: null,
   positions: [],
   artists: [],
-  lastDeletedPosition: null,
+  lastDeletedPositions: [],
   activeTab: "setup",
   selectedPositionId: null,
   selectedPositionIds: new Set<string>(),
@@ -109,32 +112,61 @@ export const useEventStore = create<EventStore>((set) => ({
     })),
   removePosition: (id) =>
     set((s) => {
-      const deleted = s.positions.find((p) => p.id === id);
+      const index = s.positions.findIndex((p) => p.id === id);
+      const deleted = s.positions[index];
       const deletedArtists = s.artists.filter((a) => a.positionId === id);
       return {
         positions: s.positions.filter((p) => p.id !== id),
         artists: s.artists.map((a) =>
           a.positionId === id ? { ...a, positionId: null } : a
         ),
-        lastDeletedPosition: deleted
-          ? { position: deleted, artists: deletedArtists }
-          : null,
+        lastDeletedPositions: deleted ? [{ position: deleted, artists: deletedArtists, index }] : [],
         selectedPositionId: s.selectedPositionId === id ? null : s.selectedPositionId,
         selectedPositionIds: (() => { const n = new Set(s.selectedPositionIds); n.delete(id); return n; })(),
         dirty: true,
       };
     }),
+  removeSelectedPositions: () =>
+    set((s) => {
+      const ids = s.selectedPositionIds;
+      if (ids.size === 0) return s;
+      const deleted = s.positions.filter((p) => ids.has(p.id));
+      const batch: DeletedPosition[] = deleted.map((pos) => ({
+        position: pos,
+        artists: s.artists.filter((a) => a.positionId === pos.id),
+        index: s.positions.findIndex((p) => p.id === pos.id),
+      }));
+      return {
+        positions: s.positions.filter((p) => !ids.has(p.id)),
+        artists: s.artists.map((a) => ids.has(a.positionId ?? "") ? { ...a, positionId: null } : a),
+        lastDeletedPositions: batch,
+        selectedPositionId: null,
+        selectedPositionIds: new Set(),
+        dirty: true,
+      };
+    }),
   undoRemovePosition: () =>
     set((s) => {
-      if (!s.lastDeletedPosition) return s;
-      const { position, artists: deletedArtists } = s.lastDeletedPosition;
-      return {
-        positions: [...s.positions, position],
-        artists: s.artists.map((a) => {
+      if (s.lastDeletedPositions.length === 0) return s;
+      let artists = [...s.artists];
+      const restoredPositions = s.lastDeletedPositions.map((d) => d.position);
+      for (const { position, artists: deletedArtists } of s.lastDeletedPositions) {
+        artists = artists.map((a) => {
           const restored = deletedArtists.find((da) => da.id === a.id);
           return restored ? { ...a, positionId: position.id } : a;
-        }),
-        lastDeletedPosition: null,
+        });
+      }
+      // Re-insert each restored position at its original index, then renumber sortOrder
+      const merged = [...s.positions];
+      for (const deleted of s.lastDeletedPositions) {
+        const insertAt = Math.min(deleted.index, merged.length);
+        merged.splice(insertAt, 0, deleted.position);
+      }
+      const positions = merged.map((p, i) => ({ ...p, sortOrder: i }));
+      return {
+        positions,
+        artists,
+        lastDeletedPositions: [],
         dirty: true,
       };
     }),
@@ -161,6 +193,16 @@ export const useEventStore = create<EventStore>((set) => ({
           return a ? { ...a, sortOrder: i } : null;
         })
         .filter(Boolean) as Artist[],
+      dirty: true,
+    })),
+  reorderPositions: (ids) =>
+    set((s) => ({
+      positions: ids
+        .map((id, i) => {
+          const p = s.positions.find((x) => x.id === id);
+          return p ? { ...p, sortOrder: i } : null;
+        })
+        .filter(Boolean) as import("@/types/models").Position[],
       dirty: true,
     })),
 

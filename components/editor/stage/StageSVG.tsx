@@ -21,9 +21,9 @@ const FOH_LABEL_HEIGHT = 24;
 const POS_NAME_SIZE = 10;
 const POS_NAME_Y = 14; // offset from top of rect
 const DIM_SIZE = 7;    // dimensions label font size
-const DIM_Y = 24;      // offset from top of rect
+const DIM_ABOVE = 8;   // distance above the top edge of the rect
 const ARTIST_SIZE = 8.5;
-const ARTIST_START_Y = 37; // first artist offset from top
+const ARTIST_START_Y = 30; // first artist offset from top (reduced now that dims are above)
 const ARTIST_LINE_H = 13; // spacing between artist lines
 const PADDING_BOTTOM = 2; // breathing room at bottom of rect
 
@@ -372,6 +372,18 @@ export function StageSVG({
                 onClick={handleClick}
               />
             )}
+            {/* Dimensions label above the rect */}
+            <text
+              x={pos.x + pos.width / 2}
+              y={pos.y - DIM_ABOVE}
+              textAnchor="middle"
+              fontSize={DIM_SIZE}
+              fill={pos.color}
+              opacity={0.5}
+              style={{ pointerEvents: "none", userSelect: "none" }}
+            >
+              {pos.width}x{pos.height}cm
+            </text>
             {/* Clipped text content */}
             <g clipPath={`url(#clip-${pos.id})`}>
               {/* Position name */}
@@ -385,18 +397,6 @@ export function StageSVG({
                 style={{ pointerEvents: "none", userSelect: "none" }}
               >
                 {truncate(pos.name, pos.width, POS_NAME_SIZE)}
-              </text>
-              {/* Dimensions */}
-              <text
-                x={pos.x + pos.width / 2}
-                y={pos.y + DIM_Y}
-                textAnchor="middle"
-                fontSize={DIM_SIZE}
-                fill={pos.color}
-                opacity={0.5}
-                style={{ pointerEvents: "none", userSelect: "none" }}
-              >
-                {pos.width}x{pos.height}cm
               </text>
               {/* Artist names */}
               {wrappedArtists ? (

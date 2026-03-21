@@ -1,12 +1,64 @@
 "use client";
 
-import { useId, useEffect, useRef } from "react";
+import React, { useId } from "react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useEventStore } from "@/store/eventStore";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { StageSVG } from "@/components/editor/stage/StageSVG";
 import { PositionForm } from "@/components/editor/stage/PositionForm";
-import { POSITION_COLORS } from "@/types/models";
+import { POSITION_COLORS, type Position } from "@/types/models";
+
+function SortablePositionRow({ position }: { position: Position }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: position.id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.4 : 1,
+      }}
+      className="flex items-start gap-1"
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="mt-2.5 flex-shrink-0 cursor-grab active:cursor-grabbing text-dim hover:text-muted touch-none"
+        tabIndex={-1}
+        aria-label="Drag to reorder"
+      >
+        <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor">
+          <circle cx="4" cy="3" r="1.5" />
+          <circle cx="8" cy="3" r="1.5" />
+          <circle cx="4" cy="8" r="1.5" />
+          <circle cx="8" cy="8" r="1.5" />
+          <circle cx="4" cy="13" r="1.5" />
+          <circle cx="8" cy="13" r="1.5" />
+        </svg>
+      </button>
+      <div className="flex-1 min-w-0">
+        <PositionForm position={position} />
+      </div>
+    </div>
+  );
+}
 
 function generateId() {
   return Math.random().toString(36).slice(2, 11);
@@ -14,21 +66,18 @@ function generateId() {
 
 export function SetupTab() {
   const uid = useId();
-  const { event, positions, patchEvent, addPosition, lastDeletedPosition, undoRemovePosition, snapEnabled, snapSize, setSnapEnabled, setSnapSize } = useEventStore();
-  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { event, positions, patchEvent, addPosition, reorderPositions, lastDeletedPositions, undoRemovePosition, snapEnabled, snapSize, setSnapEnabled, setSnapSize } = useEventStore();
 
-  // Auto-dismiss undo toast after 5 seconds
-  useEffect(() => {
-    if (lastDeletedPosition) {
-      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
-      undoTimerRef.current = setTimeout(() => {
-        useEventStore.setState({ lastDeletedPosition: null });
-      }, 5000);
-    }
-    return () => {
-      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
-    };
-  }, [lastDeletedPosition]);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  function handleDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const ids = positions.map((p) => p.id);
+    const oldIndex = ids.indexOf(active.id as string);
+    const newIndex = ids.indexOf(over.id as string);
+    reorderPositions(arrayMove(ids, oldIndex, newIndex));
+  }
 
   if (!event) return null;
 
@@ -137,17 +186,33 @@ export function SetupTab() {
           {positions.length === 0 && (
             <p className="text-xs text-dim py-2">No positions yet.</p>
           )}
-          {positions.map((pos) => (
-            <PositionForm key={pos.id} position={pos} />
-          ))}
-          {lastDeletedPosition && (
-            <div className="flex items-center justify-between gap-2 px-3 py-2 bg-surface border border-border rounded-lg text-xs text-muted">
-              <span>Deleted <strong className="text-text">{lastDeletedPosition.position.name}</strong></span>
-              <Button size="sm" variant="outline" onClick={undoRemovePosition}>
-                Undo
-              </Button>
-            </div>
-          )}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={positions.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+              {(() => {
+                const toastIndex = lastDeletedPositions.length > 0
+                  ? lastDeletedPositions[0].index
+                  : -1;
+                const items: React.ReactNode[] = positions.map((pos) => (
+                  <SortablePositionRow key={pos.id} position={pos} />
+                ));
+                if (toastIndex >= 0) {
+                  const toast = (
+                    <div key="undo-toast" className="flex items-center justify-between gap-2 px-3 py-2 bg-surface border border-border rounded-lg text-xs text-muted">
+                      <span>
+                        {lastDeletedPositions.length === 1
+                          ? <>Deleted <strong className="text-text">{lastDeletedPositions[0].position.name}</strong></>
+                          : <>Deleted <strong className="text-text">{lastDeletedPositions.length} positions</strong></>
+                        }
+                      </span>
+                      <Button size="sm" variant="outline" onClick={undoRemovePosition}>Undo</Button>
+                    </div>
+                  );
+                  items.splice(Math.min(toastIndex, items.length), 0, toast);
+                }
+                return items;
+              })()}
+            </SortableContext>
+          </DndContext>
         </section>
       </div>
 

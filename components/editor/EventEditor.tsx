@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Fragment } from "react";
 import Link from "next/link";
 import { useEventStore } from "@/store/eventStore";
 import { useAutoSave } from "@/hooks/useAutoSave";
@@ -30,7 +30,7 @@ const TABS = [
 ];
 
 export function EventEditor({ initial }: Props) {
-  const { setEvent, setPositions, setArtists, activeTab, setActiveTab, event } =
+  const { setEvent, setPositions, setArtists, activeTab, setActiveTab, event, removeSelectedPositions } =
     useEventStore();
 
   // Hydrate store from server data on mount
@@ -42,6 +42,19 @@ export function EventEditor({ initial }: Props) {
 
   // Wire up auto-save
   useAutoSave();
+
+  // Delete key removes selected positions (guard: ignore when focus is in an input)
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key !== "Delete" && e.key !== "Backspace") return;
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement).isContentEditable) return;
+      e.preventDefault();
+      removeSelectedPositions();
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [removeSelectedPositions]);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
@@ -68,15 +81,14 @@ export function EventEditor({ initial }: Props) {
       {/* Tab bar */}
       <nav className="flex items-stretch border-b border-border bg-surface flex-shrink-0 px-4 overflow-x-auto">
         {TABS.map((tab, i) => (
-          <>
+          <Fragment key={tab.id}>
             {/* Divider between edit and view groups */}
             {i === 2 && (
-              <div key="divider" className="flex items-center px-3">
+              <div className="flex items-center px-3">
                 <div className="w-px h-4 bg-border" />
               </div>
             )}
             <button
-              key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
                 "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors cursor-pointer whitespace-nowrap",
@@ -89,7 +101,7 @@ export function EventEditor({ initial }: Props) {
             >
               {tab.label}
             </button>
-          </>
+          </Fragment>
         ))}
       </nav>
 

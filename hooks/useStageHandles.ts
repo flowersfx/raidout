@@ -26,7 +26,7 @@ interface RotateState {
   startRotation: number; // degrees
 }
 
-const MIN_SIZE = 40; // minimum position dimension in stage units (cm)
+const MIN_SIZE = 20; // minimum position dimension in stage units (cm)
 
 export function useStageHandles(svgRef: React.RefObject<SVGSVGElement | null>) {
   const resizeRef = useRef<ResizeState | null>(null);
@@ -149,7 +149,7 @@ export function useStageHandles(svgRef: React.RefObject<SVGSVGElement | null>) {
 
         const { snapEnabled } = useEventStore.getState();
         if (snapEnabled) {
-          newRotation = Math.round(newRotation / 15) * 15;
+          newRotation = Math.round(newRotation / 7.5) * 7.5;
         }
 
         patchPosition(r.posId, { rotation: newRotation });

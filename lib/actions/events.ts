@@ -17,7 +17,7 @@ export async function getEvent(id: string) {
   return prisma.event.findUnique({
     where: { id },
     include: {
-      positions: { orderBy: { name: "asc" } },
+      positions: { orderBy: { sortOrder: "asc" } },
       artists: { orderBy: { sortOrder: "asc" } },
     },
   });
@@ -27,7 +27,7 @@ export async function getEventByShareToken(token: string) {
   return prisma.event.findUnique({
     where: { shareToken: token },
     include: {
-      positions: { orderBy: { name: "asc" } },
+      positions: { orderBy: { sortOrder: "asc" } },
       artists: { orderBy: { sortOrder: "asc" } },
     },
   });
@@ -116,6 +116,7 @@ export async function saveEventSnapshot(snapshot: {
           height: p.height,
           color: p.color,
           rotation: p.rotation ?? 0,
+          sortOrder: p.sortOrder ?? 0,
         },
         update: {
           name: p.name,
@@ -125,6 +126,7 @@ export async function saveEventSnapshot(snapshot: {
           height: p.height,
           color: p.color,
           rotation: p.rotation ?? 0,
+          sortOrder: p.sortOrder ?? 0,
         },
       });
     }
