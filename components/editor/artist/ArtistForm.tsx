@@ -49,7 +49,7 @@ export function ArtistForm({ artist }: Props) {
     <div className="p-4 flex flex-col gap-4">
       {/* Row 1: name + position + times */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2">
+        <div>
           <Input
             id={`${uid}-name`}
             label="Artist name"
@@ -57,6 +57,13 @@ export function ArtistForm({ artist }: Props) {
             onChange={(e) => patch({ name: e.target.value })}
           />
         </div>
+        <Input
+          id={`${uid}-arrival`}
+          label="Arrival time"
+          type="time"
+          value={artist.arrivalTime ?? ""}
+          onChange={(e) => patch({ arrivalTime: e.target.value || null })}
+        />
         <div>
           <label className="text-xs text-muted uppercase tracking-wider block mb-1">
             Position
@@ -129,6 +136,24 @@ export function ArtistForm({ artist }: Props) {
       >
         + Add time slot
       </button>
+
+      {/* Soundcheck */}
+      <div className="grid grid-cols-2 gap-3">
+        <Input
+          id={`${uid}-sc-start`}
+          label="Soundcheck start"
+          type="time"
+          value={artist.soundcheckStart ?? ""}
+          onChange={(e) => patch({ soundcheckStart: e.target.value || null })}
+        />
+        <Input
+          id={`${uid}-sc-end`}
+          label="Soundcheck end"
+          type="time"
+          value={artist.soundcheckEnd ?? ""}
+          onChange={(e) => patch({ soundcheckEnd: e.target.value || null })}
+        />
+      </div>
 
       {/* Text fields */}
       <Textarea

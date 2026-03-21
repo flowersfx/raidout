@@ -156,6 +156,9 @@ export async function saveEventSnapshot(snapshot: {
           routing: a.routing,
           notes: a.notes,
           extraSlots: a.extraSlots ?? "[]",
+          arrivalTime: a.arrivalTime,
+          soundcheckStart: a.soundcheckStart,
+          soundcheckEnd: a.soundcheckEnd,
           sortOrder: a.sortOrder,
         },
         update: {
@@ -169,6 +172,9 @@ export async function saveEventSnapshot(snapshot: {
           routing: a.routing,
           notes: a.notes,
           extraSlots: a.extraSlots ?? "[]",
+          arrivalTime: a.arrivalTime,
+          soundcheckStart: a.soundcheckStart,
+          soundcheckEnd: a.soundcheckEnd,
           sortOrder: a.sortOrder,
         },
       });

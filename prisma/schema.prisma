@@ -58,7 +58,10 @@ model Artist {
   gearBrings String    @default("")
   venueNeeds String    @default("")
   routing    String    @default("")
-  notes      String    @default("")
-  extraSlots String    @default("[]")
+  notes           String    @default("")
+  extraSlots      String    @default("[]")
+  arrivalTime     String?
+  soundcheckStart String?
+  soundcheckEnd   String?
   sortOrder  Int       @default(0)
 }

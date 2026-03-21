@@ -28,6 +28,8 @@ export function FOHArtistCard({ artist, position }: Props) {
           <p className="font-bold text-text">{artist.name}</p>
           <p className="text-xs text-muted mono mt-0.5">
             {getAllSlots(artist).map((s, i) => `${i > 0 ? ", " : ""}${s.startTime}–${s.endTime}`).join("")}
+            {artist.arrivalTime && ` · Arrival: ${artist.arrivalTime}`}
+            {artist.soundcheckStart && artist.soundcheckEnd && ` · SC: ${artist.soundcheckStart}–${artist.soundcheckEnd}`}
             {artist.tableMin && ` · Table: ${artist.tableMin}`}
           </p>
         </div>

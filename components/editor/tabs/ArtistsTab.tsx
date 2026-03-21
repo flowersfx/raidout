@@ -71,6 +71,9 @@ export function ArtistsTab() {
       routing: "",
       notes: "",
       extraSlots: "[]",
+      arrivalTime: null,
+      soundcheckStart: null,
+      soundcheckEnd: null,
       sortOrder: artists.length,
     });
   }

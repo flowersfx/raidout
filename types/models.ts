@@ -50,6 +50,9 @@ export interface Artist {
   routing: string;
   notes: string;
   extraSlots: string; // JSON array of TimeSlot[]
+  arrivalTime: string | null;
+  soundcheckStart: string | null;
+  soundcheckEnd: string | null;
   sortOrder: number;
 }
 
