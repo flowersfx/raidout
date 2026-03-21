@@ -5,11 +5,19 @@ import type { Event, Position, Artist } from "@/types/models";
 
 type Tab = "setup" | "artists" | "plot" | "foh" | "order";
 
+interface DeletedPosition {
+  position: Position;
+  artists: Artist[];
+}
+
 interface EventStore {
   // Data
   event: Event | null;
   positions: Position[];
   artists: Artist[];
+
+  // Undo state
+  lastDeletedPosition: DeletedPosition | null;
 
   // UI state
   activeTab: Tab;
@@ -25,8 +33,10 @@ interface EventStore {
   // Position actions
   setPositions(p: Position[]): void;
   addPosition(p: Position): void;
+  clonePosition(id: string): void;
   patchPosition(id: string, fields: Partial<Position>): void;
   removePosition(id: string): void;
+  undoRemovePosition(): void;
 
   // Artist actions
   setArtists(a: Artist[]): void;
@@ -48,6 +58,7 @@ export const useEventStore = create<EventStore>((set) => ({
   event: null,
   positions: [],
   artists: [],
+  lastDeletedPosition: null,
   activeTab: "setup",
   expandedArtistId: null,
   dirty: false,
@@ -64,20 +75,54 @@ export const useEventStore = create<EventStore>((set) => ({
   setPositions: (p) => set({ positions: p }),
   addPosition: (p) =>
     set((s) => ({ positions: [...s.positions, p], dirty: true })),
+  clonePosition: (id) =>
+    set((s) => {
+      const source = s.positions.find((p) => p.id === id);
+      if (!source) return s;
+      const newId = Math.random().toString(36).slice(2, 11);
+      const clone: Position = {
+        ...source,
+        id: newId,
+        name: `${source.name} (copy)`,
+        x: source.x + 20,
+        y: source.y + 20,
+      };
+      return { positions: [...s.positions, clone], dirty: true };
+    }),
   patchPosition: (id, fields) =>
     set((s) => ({
       positions: s.positions.map((p) => (p.id === id ? { ...p, ...fields } : p)),
       dirty: true,
     })),
   removePosition: (id) =>
-    set((s) => ({
-      positions: s.positions.filter((p) => p.id !== id),
-      // Unassign artists that were at this position
-      artists: s.artists.map((a) =>
-        a.positionId === id ? { ...a, positionId: null } : a
-      ),
-      dirty: true,
-    })),
+    set((s) => {
+      const deleted = s.positions.find((p) => p.id === id);
+      const deletedArtists = s.artists.filter((a) => a.positionId === id);
+      return {
+        positions: s.positions.filter((p) => p.id !== id),
+        artists: s.artists.map((a) =>
+          a.positionId === id ? { ...a, positionId: null } : a
+        ),
+        lastDeletedPosition: deleted
+          ? { position: deleted, artists: deletedArtists }
+          : null,
+        dirty: true,
+      };
+    }),
+  undoRemovePosition: () =>
+    set((s) => {
+      if (!s.lastDeletedPosition) return s;
+      const { position, artists: deletedArtists } = s.lastDeletedPosition;
+      return {
+        positions: [...s.positions, position],
+        artists: s.artists.map((a) => {
+          const restored = deletedArtists.find((da) => da.id === a.id);
+          return restored ? { ...a, positionId: position.id } : a;
+        }),
+        lastDeletedPosition: null,
+        dirty: true,
+      };
+    }),
 
   setArtists: (a) => set({ artists: a }),
   addArtist: (a) =>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useEffect, useRef } from "react";
 import { useEventStore } from "@/store/eventStore";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -14,7 +14,21 @@ function generateId() {
 
 export function SetupTab() {
   const uid = useId();
-  const { event, positions, patchEvent, addPosition } = useEventStore();
+  const { event, positions, patchEvent, addPosition, lastDeletedPosition, undoRemovePosition } = useEventStore();
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Auto-dismiss undo toast after 5 seconds
+  useEffect(() => {
+    if (lastDeletedPosition) {
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+      undoTimerRef.current = setTimeout(() => {
+        useEventStore.setState({ lastDeletedPosition: null });
+      }, 5000);
+    }
+    return () => {
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    };
+  }, [lastDeletedPosition]);
 
   if (!event) return null;
 
@@ -102,6 +116,14 @@ export function SetupTab() {
           {positions.map((pos) => (
             <PositionForm key={pos.id} position={pos} />
           ))}
+          {lastDeletedPosition && (
+            <div className="flex items-center justify-between gap-2 px-3 py-2 bg-surface border border-border rounded-lg text-xs text-muted">
+              <span>Deleted <strong className="text-text">{lastDeletedPosition.position.name}</strong></span>
+              <Button size="sm" variant="outline" onClick={undoRemovePosition}>
+                Undo
+              </Button>
+            </div>
+          )}
         </section>
       </div>
 

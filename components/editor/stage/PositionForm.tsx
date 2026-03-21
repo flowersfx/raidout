@@ -12,7 +12,7 @@ interface Props {
 }
 
 export function PositionForm({ position }: Props) {
-  const { patchPosition, removePosition } = useEventStore();
+  const { patchPosition, removePosition, clonePosition } = useEventStore();
   const uid = useId();
 
   const patch = (fields: Partial<Position>) => patchPosition(position.id, fields);
@@ -26,6 +26,14 @@ export function PositionForm({ position }: Props) {
           onChange={(e) => patch({ name: e.target.value })}
           placeholder="Position name"
         />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => clonePosition(position.id)}
+          title="Clone position"
+        >
+          ⧉
+        </Button>
         <Button
           variant="danger"
           size="sm"
