@@ -150,7 +150,8 @@ export function StageSVG({
 
       {positions.map((pos) => {
         const assignedArtists = artists.filter((a) => a.positionId === pos.id);
-        const firstGearLine = assignedArtists[0]?.gearBrings?.split("\n")[0] ?? "";
+        const gearLines = assignedArtists
+          .flatMap((a) => a.gearBrings ? a.gearBrings.split("\n").filter((l) => l.trim()) : []);
         const cx = pos.x + pos.width / 2;
         const cy = pos.y + pos.height / 2;
         const rotation = pos.rotation ?? 0;
@@ -309,7 +310,7 @@ export function StageSVG({
               )}
             </g>
             {/* Gear annotation (plot view only) */}
-            {annotateGear && firstGearLine && (
+            {annotateGear && gearLines.length > 0 && (
               <text
                 x={pos.x + pos.width / 2}
                 y={pos.y + pos.height + 12}
@@ -318,7 +319,15 @@ export function StageSVG({
                 fill="#888"
                 style={{ pointerEvents: "none", userSelect: "none" }}
               >
-                {truncate(firstGearLine, pos.width * 1.5, 7.5)}
+                {gearLines.map((line, gi) => (
+                  <tspan
+                    key={gi}
+                    x={pos.x + pos.width / 2}
+                    dy={gi === 0 ? 0 : 10}
+                  >
+                    {truncate(line, pos.width * 1.5, 7.5)}
+                  </tspan>
+                ))}
               </text>
             )}
           </g>
