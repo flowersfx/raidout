@@ -62,9 +62,14 @@ export function useStageDrag(svgRef: React.RefObject<SVGSVGElement | null>) {
         didDragRef.current = true;
       }
 
+      const { snapEnabled, snapSize } = useEventStore.getState();
+      const snap = (v: number) => snapEnabled && snapSize > 0
+        ? Math.round(v / snapSize) * snapSize
+        : Math.round(v);
+
       for (const ps of positionStarts) {
-        const newX = Math.max(0, Math.round(ps.x + dx));
-        const newY = Math.max(0, Math.round(ps.y + dy));
+        const newX = Math.max(0, snap(ps.x + dx));
+        const newY = Math.max(0, snap(ps.y + dy));
         patchPosition(ps.id, { x: newX, y: newY });
       }
     },

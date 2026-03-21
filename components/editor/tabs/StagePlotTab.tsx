@@ -13,7 +13,7 @@ export function StagePlotTab() {
           <h2 className="text-sm font-semibold text-text">Stage Plot</h2>
           {event && (
             <p className="text-xs text-muted mt-0.5">
-              {event.stageWidth} × {event.stageDepth} units
+              {event.stageWidth} × {event.stageDepth} cm
             </p>
           )}
         </div>

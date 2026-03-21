@@ -24,6 +24,8 @@ interface EventStore {
   selectedPositionId: string | null;       // primary (last-clicked) for form display
   selectedPositionIds: Set<string>;        // all selected positions
   expandedArtistId: string | null;
+  snapEnabled: boolean;
+  snapSize: number;                        // snap grid size in stage units
   dirty: boolean;
   saving: boolean;
   saveError: string | null;
@@ -53,6 +55,8 @@ interface EventStore {
   toggleSelectedPosition(id: string): void;  // ctrl/shift click
   setSelectedPositionIds(ids: Set<string>): void;
   setExpandedArtist(id: string | null): void;
+  setSnapEnabled(v: boolean): void;
+  setSnapSize(v: number): void;
   markDirty(): void;
   clearDirty(): void;
   setSaving(v: boolean): void;
@@ -68,6 +72,8 @@ export const useEventStore = create<EventStore>((set) => ({
   selectedPositionId: null,
   selectedPositionIds: new Set<string>(),
   expandedArtistId: null,
+  snapEnabled: true,
+  snapSize: 10, // 100 / 10 = 10 cm per snap (10 snaps per grid square)
   dirty: false,
   saving: false,
   saveError: null,
@@ -181,6 +187,8 @@ export const useEventStore = create<EventStore>((set) => ({
     selectedPositionId: ids.size > 0 ? [...ids][ids.size - 1] : null,
   }),
   setExpandedArtist: (id) => set({ expandedArtistId: id }),
+  setSnapEnabled: (v) => set({ snapEnabled: v }),
+  setSnapSize: (v) => set({ snapSize: v }),
   markDirty: () => set({ dirty: true }),
   clearDirty: () => set({ dirty: false }),
   setSaving: (v) => set({ saving: v }),

@@ -14,7 +14,7 @@ function generateId() {
 
 export function SetupTab() {
   const uid = useId();
-  const { event, positions, patchEvent, addPosition, lastDeletedPosition, undoRemovePosition } = useEventStore();
+  const { event, positions, patchEvent, addPosition, lastDeletedPosition, undoRemovePosition, snapEnabled, snapSize, setSnapEnabled, setSnapSize } = useEventStore();
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auto-dismiss undo toast after 5 seconds
@@ -83,7 +83,7 @@ export function SetupTab() {
           <div className="grid grid-cols-2 gap-2">
             <Input
               id={`${uid}-sw`}
-              label="Width"
+              label="Width (cm)"
               type="number"
               min={200}
               max={2000}
@@ -92,13 +92,37 @@ export function SetupTab() {
             />
             <Input
               id={`${uid}-sd`}
-              label="Depth"
+              label="Depth (cm)"
               type="number"
               min={100}
               max={2000}
               value={event.stageDepth}
               onChange={(e) => patchEvent({ stageDepth: Number(e.target.value) })}
             />
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+            <label className="flex items-center gap-1.5 text-xs text-muted cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={snapEnabled}
+                onChange={(e) => setSnapEnabled(e.target.checked)}
+                className="accent-accent"
+              />
+              Snap
+            </label>
+            {snapEnabled && (
+              <Input
+                id={`${uid}-snap`}
+                label="cm"
+                inline
+                type="number"
+                min={1}
+                max={100}
+                value={snapSize}
+                onChange={(e) => setSnapSize(Math.max(1, Number(e.target.value)))}
+                className="w-16 text-xs"
+              />
+            )}
           </div>
         </section>
 

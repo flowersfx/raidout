@@ -15,7 +15,7 @@ interface Props {
   annotateGear?: boolean; // show first gear line near each position
 }
 
-const GRID_STEP = 80; // grid lines every 80 stage units
+const GRID_STEP = 100; // grid lines every 100 cm
 const FOH_LABEL_HEIGHT = 24;
 const POS_NAME_SIZE = 10;
 const POS_NAME_Y = 14; // offset from top of rect

@@ -53,7 +53,7 @@ export function ShareView({ event, positions, artists }: Props) {
           &bull; {event.venue}
         </p>
         <p className="text-xs text-dim mono mt-2">
-          Stage: {event.stageWidth}×{event.stageDepth} units &bull;{" "}
+          Stage: {event.stageWidth}×{event.stageDepth} cm &bull;{" "}
           {positions.length} positions &bull; {artists.length} artists
         </p>
       </header>

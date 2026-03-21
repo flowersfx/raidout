@@ -94,6 +94,7 @@ export function PositionForm({ position }: Props) {
         </Button>
       </div>
 
+      <p className="text-xs text-dim -mb-1">Position &amp; size (cm)</p>
       <div className="grid grid-cols-3 gap-1.5">
         <Input
           id={`${uid}-x`}
@@ -115,7 +116,7 @@ export function PositionForm({ position }: Props) {
         />
         <Input
           id={`${uid}-rot`}
-          label="R"
+          label="R°"
           inline
           type="number"
           className="show-spin"
