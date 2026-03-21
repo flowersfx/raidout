@@ -5,7 +5,7 @@ import { useEventStore } from "@/store/eventStore";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
-import type { Artist } from "@/types/models";
+import type { Artist, TimeSlot } from "@/types/models";
 
 interface Props {
   artist: Artist;
@@ -16,6 +16,24 @@ export function ArtistForm({ artist }: Props) {
   const { positions, patchArtist, removeArtist, addArtist, artists } = useEventStore();
 
   const patch = (fields: Partial<Artist>) => patchArtist(artist.id, fields);
+
+  const extraSlots: TimeSlot[] = (() => {
+    try { return JSON.parse(artist.extraSlots || "[]"); } catch { return []; }
+  })();
+
+  function patchExtraSlot(index: number, fields: Partial<TimeSlot>) {
+    const updated = extraSlots.map((s, i) => i === index ? { ...s, ...fields } : s);
+    patch({ extraSlots: JSON.stringify(updated) });
+  }
+
+  function addExtraSlot() {
+    const last = extraSlots.length > 0 ? extraSlots[extraSlots.length - 1] : { startTime: artist.startTime, endTime: artist.endTime };
+    patch({ extraSlots: JSON.stringify([...extraSlots, { startTime: last.endTime, endTime: last.endTime }]) });
+  }
+
+  function removeExtraSlot(index: number) {
+    patch({ extraSlots: JSON.stringify(extraSlots.filter((_, i) => i !== index)) });
+  }
 
   function handleDuplicate() {
     const newArtist: Artist = {
@@ -78,6 +96,39 @@ export function ArtistForm({ artist }: Props) {
           onChange={(e) => patch({ endTime: e.target.value })}
         />
       </div>
+
+      {/* Extra time slots */}
+      {extraSlots.map((slot, i) => (
+        <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end">
+          <Input
+            id={`${uid}-extra-start-${i}`}
+            label={`Slot ${i + 2} start`}
+            type="time"
+            value={slot.startTime}
+            onChange={(e) => patchExtraSlot(i, { startTime: e.target.value })}
+          />
+          <Input
+            id={`${uid}-extra-end-${i}`}
+            label={`Slot ${i + 2} end`}
+            type="time"
+            value={slot.endTime}
+            onChange={(e) => patchExtraSlot(i, { endTime: e.target.value })}
+          />
+          <button
+            onClick={() => removeExtraSlot(i)}
+            className="text-dim hover:text-danger text-sm pb-1.5 px-1"
+            title="Remove slot"
+          >
+            ✕
+          </button>
+        </div>
+      ))}
+      <button
+        onClick={addExtraSlot}
+        className="text-xs text-accent hover:text-accent/80 self-start"
+      >
+        + Add time slot
+      </button>
 
       {/* Text fields */}
       <Textarea

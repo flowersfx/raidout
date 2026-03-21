@@ -4,8 +4,8 @@ import { MasterInputList } from "@/components/editor/foh/MasterInputList";
 import { TimelineBar } from "@/components/editor/running-order/TimelineBar";
 import { ChangeoverBadge } from "@/components/editor/running-order/ChangeoverBadge";
 import { Badge } from "@/components/ui/Badge";
-import { gapMinutes, changeoverStatus } from "@/lib/utils/time";
-import type { Event, Position, Artist } from "@/types/models";
+import { gapMinutes, changeoverStatus, sortableStartTime } from "@/lib/utils/time";
+import { getAllSlots, type Event, type Position, type Artist } from "@/types/models";
 
 interface Props {
   event: Event;
@@ -14,21 +14,29 @@ interface Props {
 }
 
 export function ShareView({ event, positions, artists }: Props) {
+  const allStartTimes = artists.flatMap((a) => getAllSlots(a).map((s) => s.startTime));
   const sorted = [...artists].sort((a, b) =>
-    a.startTime.replace(":", "").localeCompare(b.startTime.replace(":", ""))
+    sortableStartTime(a.startTime, allStartTimes) - sortableStartTime(b.startTime, allStartTimes)
   );
 
-  // Pre-compute changeovers
-  const changeovers = sorted.slice(1).map((artist, i) => {
-    const prev = sorted[i];
-    const gap = gapMinutes(prev.endTime, artist.startTime);
+  // Pre-compute changeovers using flattened slots
+  const flatSlots = sorted.flatMap((a) =>
+    getAllSlots(a).map((slot) => ({ artistId: a.id, positionId: a.positionId, ...slot }))
+  );
+  const sortedSlots = [...flatSlots].sort((a, b) =>
+    sortableStartTime(a.startTime, allStartTimes) - sortableStartTime(b.startTime, allStartTimes)
+  );
+  const changeovers = sortedSlots.slice(1).map((slot, i) => {
+    const prev = sortedSlots[i];
+    if (prev.artistId === slot.artistId) return null;
+    const gap = gapMinutes(prev.endTime, slot.startTime, prev.startTime);
     return {
-      afterArtistId: artist.id,
+      afterArtistId: slot.artistId,
       gapMin: gap,
       status: changeoverStatus(gap),
-      samePosition: !!prev.positionId && prev.positionId === artist.positionId,
+      samePosition: !!prev.positionId && prev.positionId === slot.positionId,
     };
-  });
+  }).filter(Boolean) as { afterArtistId: string; gapMin: number; status: ReturnType<typeof changeoverStatus>; samePosition: boolean }[];
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8 flex flex-col gap-10">
@@ -95,7 +103,9 @@ export function ShareView({ event, positions, artists }: Props) {
                     {position && <Badge label={position.name} color={position.color} className="mt-0.5" />}
                   </div>
                   <span className="mono text-sm text-muted whitespace-nowrap">
-                    {artist.startTime} – {artist.endTime}
+                    {getAllSlots(artist).map((s, si) => (
+                      <span key={si}>{si > 0 && ", "}{s.startTime} – {s.endTime}</span>
+                    ))}
                   </span>
                 </div>
               </div>

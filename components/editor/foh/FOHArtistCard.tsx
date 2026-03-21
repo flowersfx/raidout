@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/Badge";
-import type { Artist, Position } from "@/types/models";
+import { getAllSlots, type Artist, type Position } from "@/types/models";
 
 interface Props {
   artist: Artist;
@@ -27,7 +27,7 @@ export function FOHArtistCard({ artist, position }: Props) {
         <div className="flex-1">
           <p className="font-bold text-text">{artist.name}</p>
           <p className="text-xs text-muted mono mt-0.5">
-            {artist.startTime}–{artist.endTime}
+            {getAllSlots(artist).map((s, i) => `${i > 0 ? ", " : ""}${s.startTime}–${s.endTime}`).join("")}
             {artist.tableMin && ` · Table: ${artist.tableMin}`}
           </p>
         </div>

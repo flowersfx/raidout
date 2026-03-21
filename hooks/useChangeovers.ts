@@ -2,7 +2,8 @@
 
 import { useMemo } from "react";
 import { useEventStore } from "@/store/eventStore";
-import { gapMinutes, changeoverStatus, type ChangeoverStatus } from "@/lib/utils/time";
+import { gapMinutes, changeoverStatus, sortableStartTime, type ChangeoverStatus } from "@/lib/utils/time";
+import { getAllSlots } from "@/types/models";
 
 export interface ChangeoverInfo {
   beforeArtistId: string;
@@ -16,20 +17,31 @@ export function useChangeovers(): ChangeoverInfo[] {
   const artists = useEventStore((s) => s.artists);
 
   return useMemo(() => {
-    const sorted = [...artists].sort((a, b) => {
-      const ta = a.startTime.replace(":", "");
-      const tb = b.startTime.replace(":", "");
-      return ta.localeCompare(tb);
-    });
+    // Flatten all slots from all artists
+    const flatSlots = artists.flatMap((a) =>
+      getAllSlots(a).map((slot) => ({
+        artistId: a.id,
+        positionId: a.positionId,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+      }))
+    );
+
+    const allStartTimes = flatSlots.map((s) => s.startTime);
+    const sorted = [...flatSlots].sort((a, b) =>
+      sortableStartTime(a.startTime, allStartTimes) - sortableStartTime(b.startTime, allStartTimes)
+    );
 
     const result: ChangeoverInfo[] = [];
     for (let i = 0; i < sorted.length - 1; i++) {
       const cur = sorted[i];
       const next = sorted[i + 1];
-      const gap = gapMinutes(cur.endTime, next.startTime);
+      // Skip changeover between consecutive slots of the same artist
+      if (cur.artistId === next.artistId) continue;
+      const gap = gapMinutes(cur.endTime, next.startTime, cur.startTime);
       result.push({
-        beforeArtistId: cur.id,
-        afterArtistId: next.id,
+        beforeArtistId: cur.artistId,
+        afterArtistId: next.artistId,
         gapMin: gap,
         status: changeoverStatus(gap),
         samePosition: !!cur.positionId && cur.positionId === next.positionId,

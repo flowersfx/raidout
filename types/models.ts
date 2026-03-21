@@ -32,6 +32,11 @@ export interface Position {
   rotation: number;
 }
 
+export interface TimeSlot {
+  startTime: string;
+  endTime: string;
+}
+
 export interface Artist {
   id: string;
   eventId: string;
@@ -44,7 +49,19 @@ export interface Artist {
   venueNeeds: string;
   routing: string;
   notes: string;
+  extraSlots: string; // JSON array of TimeSlot[]
   sortOrder: number;
+}
+
+/** Get all time slots for an artist (primary + extras) */
+export function getAllSlots(artist: Artist): TimeSlot[] {
+  const primary: TimeSlot = { startTime: artist.startTime, endTime: artist.endTime };
+  try {
+    const extras: TimeSlot[] = JSON.parse(artist.extraSlots || "[]");
+    return [primary, ...extras];
+  } catch {
+    return [primary];
+  }
 }
 
 // Palette for new positions

@@ -155,6 +155,7 @@ export async function saveEventSnapshot(snapshot: {
           venueNeeds: a.venueNeeds,
           routing: a.routing,
           notes: a.notes,
+          extraSlots: a.extraSlots ?? "[]",
           sortOrder: a.sortOrder,
         },
         update: {
@@ -167,6 +168,7 @@ export async function saveEventSnapshot(snapshot: {
           venueNeeds: a.venueNeeds,
           routing: a.routing,
           notes: a.notes,
+          extraSlots: a.extraSlots ?? "[]",
           sortOrder: a.sortOrder,
         },
       });

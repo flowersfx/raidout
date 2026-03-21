@@ -59,5 +59,6 @@ model Artist {
   venueNeeds String    @default("")
   routing    String    @default("")
   notes      String    @default("")
+  extraSlots String    @default("[]")
   sortOrder  Int       @default(0)
 }

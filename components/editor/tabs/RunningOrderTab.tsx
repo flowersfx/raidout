@@ -2,6 +2,8 @@
 
 import { useEventStore } from "@/store/eventStore";
 import { useChangeovers } from "@/hooks/useChangeovers";
+import { sortableStartTime } from "@/lib/utils/time";
+import { getAllSlots } from "@/types/models";
 import { TimelineBar } from "@/components/editor/running-order/TimelineBar";
 import { ChangeoverBadge } from "@/components/editor/running-order/ChangeoverBadge";
 import { Badge } from "@/components/ui/Badge";
@@ -10,8 +12,9 @@ export function RunningOrderTab() {
   const { artists, positions } = useEventStore();
   const changeovers = useChangeovers();
 
+  const allStartTimes = artists.flatMap((a) => getAllSlots(a).map((s) => s.startTime));
   const sorted = [...artists].sort((a, b) =>
-    a.startTime.replace(":", "").localeCompare(b.startTime.replace(":", ""))
+    sortableStartTime(a.startTime, allStartTimes) - sortableStartTime(b.startTime, allStartTimes)
   );
 
   return (
@@ -72,7 +75,9 @@ export function RunningOrderTab() {
 
                     {/* Times */}
                     <span className="mono text-sm text-muted whitespace-nowrap">
-                      {artist.startTime} – {artist.endTime}
+                      {getAllSlots(artist).map((s, si) => (
+                        <span key={si}>{si > 0 && ", "}{s.startTime} – {s.endTime}</span>
+                      ))}
                     </span>
                   </div>
                 </div>

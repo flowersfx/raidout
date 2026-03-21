@@ -4,7 +4,7 @@ import { useEventStore } from "@/store/eventStore";
 import { Badge } from "@/components/ui/Badge";
 import { ArtistForm } from "./ArtistForm";
 import { cn } from "@/lib/utils/cn";
-import type { Artist } from "@/types/models";
+import { getAllSlots, type Artist } from "@/types/models";
 
 interface Props {
   artist: Artist;
@@ -48,7 +48,9 @@ export function ArtistCard({ artist, dragHandle }: Props) {
         {/* Name + time */}
         <span className="font-semibold text-sm text-text flex-1 truncate">{artist.name}</span>
         <span className="text-xs text-muted mono whitespace-nowrap">
-          {artist.startTime}–{artist.endTime}
+          {getAllSlots(artist).map((s, i) => (
+            <span key={i}>{i > 0 && ", "}{s.startTime}–{s.endTime}</span>
+          ))}
         </span>
 
         {/* Position badge */}

@@ -3,15 +3,16 @@
 import { useEventStore } from "@/store/eventStore";
 import { FOHArtistCard } from "@/components/editor/foh/FOHArtistCard";
 import { MasterInputList } from "@/components/editor/foh/MasterInputList";
+import { sortableStartTime } from "@/lib/utils/time";
+import { getAllSlots } from "@/types/models";
 
 export function FOHTab() {
   const { artists, positions } = useEventStore();
 
-  const sorted = [...artists].sort((a, b) => {
-    const ta = a.startTime.replace(":", "");
-    const tb = b.startTime.replace(":", "");
-    return ta.localeCompare(tb);
-  });
+  const allStartTimes = artists.flatMap((a) => getAllSlots(a).map((s) => s.startTime));
+  const sorted = [...artists].sort((a, b) =>
+    sortableStartTime(a.startTime, allStartTimes) - sortableStartTime(b.startTime, allStartTimes)
+  );
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-6 w-full flex flex-col gap-8">

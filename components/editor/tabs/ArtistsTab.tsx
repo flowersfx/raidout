@@ -70,6 +70,7 @@ export function ArtistsTab() {
       venueNeeds: "",
       routing: "",
       notes: "",
+      extraSlots: "[]",
       sortOrder: artists.length,
     });
   }
