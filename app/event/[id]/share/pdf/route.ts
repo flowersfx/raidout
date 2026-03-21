@@ -26,7 +26,6 @@ export async function GET(
       const puppeteerCore = await import("puppeteer-core");
       browser = await puppeteerCore.default.launch({
         args: chromium.default.args,
-        defaultViewport: chromium.default.defaultViewport,
         executablePath: await chromium.default.executablePath(
           "https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar"
         ),
