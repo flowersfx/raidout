@@ -94,6 +94,7 @@ export function SetupTab() {
       height: 80,
       color: POSITION_COLORS[colorIndex],
       rotation: 0,
+      sortOrder: positions.length,
     });
   }
 
