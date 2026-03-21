@@ -22,11 +22,11 @@ interface Props {
 }
 
 const TABS = [
-  { id: "setup" as const, label: "Setup" },
-  { id: "artists" as const, label: "Artists" },
-  { id: "plot" as const, label: "Stage Plot" },
-  { id: "foh" as const, label: "FOH Summary" },
-  { id: "order" as const, label: "Running Order" },
+  { id: "setup"    as const, label: "Setup",         edit: true  },
+  { id: "artists"  as const, label: "Artists",        edit: true  },
+  { id: "plot"     as const, label: "Stage Plot",     edit: false },
+  { id: "foh"      as const, label: "FOH Summary",    edit: false },
+  { id: "order"    as const, label: "Running Order",  edit: false },
 ];
 
 export function EventEditor({ initial }: Props) {
@@ -66,20 +66,30 @@ export function EventEditor({ initial }: Props) {
       </header>
 
       {/* Tab bar */}
-      <nav className="flex border-b border-border bg-surface flex-shrink-0 px-4 overflow-x-auto">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors cursor-pointer whitespace-nowrap",
-              activeTab === tab.id
-                ? "border-accent text-accent"
-                : "border-transparent text-muted hover:text-text"
+      <nav className="flex items-stretch border-b border-border bg-surface flex-shrink-0 px-4 overflow-x-auto">
+        {TABS.map((tab, i) => (
+          <>
+            {/* Divider between edit and view groups */}
+            {i === 2 && (
+              <div key="divider" className="flex items-center px-3">
+                <div className="w-px h-4 bg-border" />
+              </div>
             )}
-          >
-            {tab.label}
-          </button>
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors cursor-pointer whitespace-nowrap",
+                activeTab === tab.id
+                  ? tab.edit
+                    ? "border-accent text-accent"
+                    : "border-text/40 text-text"
+                  : "border-transparent text-muted hover:text-text"
+              )}
+            >
+              {tab.label}
+            </button>
+          </>
         ))}
       </nav>
 
