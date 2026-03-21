@@ -12,13 +12,15 @@ The typical workflow today: receive 4–7 artist riders (PDF/email), manually dr
 
 ## Tech Stack
 
-- **Framework**: Next.js (App Router)
+- **Framework**: Next.js 16 (App Router, Turbopack)
 - **Database**: SQLite via Prisma (simple, zero-config, easy to migrate to Postgres later)
+- **State management**: Zustand
 - **Styling**: Tailwind CSS
 - **Stage plot rendering**: SVG (server-renderable, printable, no canvas)
+- **Drag & drop**: @dnd-kit (artist reordering)
 - **PDF export**: `@react-pdf/renderer` or `puppeteer` (for print-quality output from the same views)
 - **Deployment target**: Vercel (or any Node-compatible host)
-- **Auth**: NextAuth.js with a simple email/password or magic link flow (keep it minimal — this isn't a social app)
+- **Auth**: NextAuth.js (planned — currently using dev user stub)
 
 ## Data Model
 
@@ -28,8 +30,8 @@ Event
   name          String              // "Syntax Error: STACK OVERFLOW"
   date          DateTime
   venue         String
-  stageWidth    Int       @default(800)   // visual units for SVG
-  stageDepth    Int       @default(400)
+  stageWidth    Int       @default(800)   // cm — stage dimensions
+  stageDepth    Int       @default(400)   // cm
   shareToken    String    @unique @default(cuid())  // for public read-only link
   createdBy     String              // user id
   positions     Position[]
@@ -40,29 +42,31 @@ Event
 Position
   id            String    @id @default(cuid())
   eventId       String
-  event         Event     @relation(fields: [eventId])
   name          String              // "DJ Booth A", "Live Act B"
-  x             Int                 // position on stage SVG
+  x             Int                 // position on stage SVG (cm)
   y             Int
-  width         Int                 // table/booth footprint
+  width         Int                 // table/booth footprint (cm)
   height        Int
   color         String    @default("#00e5ff")  // for visual coding
+  rotation      Int       @default(0)          // degrees (-180 to 180)
   artists       Artist[]
 
 Artist
   id            String    @id @default(cuid())
   eventId       String
-  event         Event     @relation(fields: [eventId])
   positionId    String?
-  position      Position? @relation(fields: [positionId])
   name          String              // DJ/act name
-  startTime     String              // "22:30" — store as HH:MM string
+  startTime     String              // "22:30" — HH:MM format
   endTime       String              // "23:45"
-  tableMin      String?             // "160×60 cm" — freeform, artists specify differently
+  tableMin      String?             // "160×60 cm" — freeform
   gearBrings    String    @default("")  // multi-line: what they bring
   venueNeeds    String    @default("")  // multi-line: what venue must provide
   routing       String    @default("")  // multi-line: signal routing spec
   notes         String    @default("")
+  extraSlots    String    @default("[]")  // JSON array of {startTime, endTime} for multiple slots
+  arrivalTime   String?             // HH:MM — when artist arrives
+  soundcheckStart String?           // HH:MM
+  soundcheckEnd   String?           // HH:MM
   sortOrder     Int       @default(0)
 
 User
@@ -87,43 +91,47 @@ User
 The event editor is the core UI. Five tabs:
 
 ### 1. Event Setup
-- Event name, date, venue
-- Stage dimensions (width × depth in arbitrary units — just for the SVG proportions)
-- **Table/Booth positions**: add/remove positions, set name, color, and drag or input X/Y/W/H coordinates on the stage
-- Positions should be draggable directly on a mini stage preview
+- Event name, date (locale-formatted), venue
+- Stage dimensions in cm (width × depth), with 100cm grid
+- Snap-to-grid toggle with configurable snap size (default 10cm)
+- **Positions**: add, clone, delete (with undo), color picker (inline single-swatch that expands)
+- Position properties: X, Y, W, H (cm), rotation (degrees)
+- Live stage preview with:
+  - Drag to reposition (with snapping)
+  - Multi-select via Ctrl/Shift+click or marquee drag
+  - Multi-drag: move all selected positions together
+  - Click background to deselect
 
 ### 2. Artists
-- List of artists as clickable cards/chips, sorted by start time
+- List of artists as expandable cards, sorted by sort order
 - Color-coded by their assigned position
-- Click to expand inline editor with fields:
-  - Name, assigned position (dropdown), start time, end time
-  - Min table space (freeform text, e.g. "160×60 cm")
-  - **Gear they bring** (multi-line textarea)
-  - **Venue must provide** (multi-line textarea)
-  - **Signal routing** (multi-line textarea, e.g. "Ch 1-2: Stereo master from DJM (XLR)")
-  - Notes (freeform)
-- Duplicate and delete actions
-- Drag to reorder (or auto-sort by time)
+- Drag to reorder
+- Expand to edit:
+  - Name, arrival time, position (dropdown), min table space
+  - Start/end time with midnight-crossing support (end < start = next day)
+  - Extra time slots (+ Add time slot) for artists playing multiple sets
+  - Soundcheck start/end times
+  - Gear, venue needs, signal routing (multi-line textareas)
+  - Notes, duplicate, delete actions
 
 ### 3. Stage Plot (read-only view)
-- Top-down SVG of the stage
-- Positions rendered as labeled rectangles with their color
-- Artists assigned to each position listed inside/below the rectangle
-- Key gear items annotated near each position
-- "FRONT OF HOUSE" label at bottom edge
-- Grid lines for spatial reference
-- This is the "money view" — it replaces the Photoshop drawing
+- Top-down SVG of the stage with 100cm grid
+- Positions as labeled, colored, rotatable rectangles
+- Artists listed inside each position (with overflow handling)
+- **All** gear items from **all** artists annotated below each position
+- "FRONT OF HOUSE" label at bottom
+- Selected positions expand to show all artists with word-wrap
 
 ### 4. FOH Summary
-- **Per-artist cards** showing: name, position, time slot, gear they bring, venue must provide, signal routing, table space, notes
-- **Consolidated master input/channel list**: every routing line from every artist, grouped by position or by channel number, with artist name attached
-- This is what the venue sound tech actually works from
+- **Per-artist cards**: name, position, time slots, arrival, soundcheck, gear, venue needs, routing, table space, notes
+- **Consolidated master input/channel list**: every routing line from every artist, grouped by position
 
 ### 5. Running Order
-- **Visual timeline bar**: horizontal, color-coded blocks per artist
-- **Detailed list**: chronological with start/end times, artist name, position
-- **Changeover indicators**: calculated gaps between consecutive artists, shown as warnings (overlap = red, tight = yellow, comfortable = green)
-- Changeover at same position vs different position should be visually distinct (same-position changeovers are the critical ones)
+- **Multi-lane timeline bar**: one lane per position, with sub-lane packing for overlapping artists
+- **Multi-column running order grid**: one column per position, overlapping artists shown side-by-side
+- Stacked entries when multiple artists overlap at the same position
+- **Changeover indicators** per position column (overlap=red, tight=yellow, comfortable=green)
+- Midnight-crossing aware sorting and gap calculations
 
 ## Shareable Read-Only View (`/event/[id]/share`)
 
@@ -151,14 +159,24 @@ The PDF should contain:
 
 Use the same visual language as the web view. The PDF is what gets emailed if the venue doesn't want a link.
 
-## Implementation Notes
+## Implementation Status
 
-- Start with SQLite + Prisma for zero-config dev. Switching to Postgres for production is a one-line Prisma datasource change.
-- Stage position dragging: simplest approach is `onMouseDown`/`onMouseMove` on SVG `<rect>` elements with coordinate math. No need for a canvas library.
-- For the shareable link, validate `shareToken` in a server component — no client-side auth check needed.
-- Multi-line text fields (gear, routing, etc.) are stored as plain strings with newlines. Render with `whitespace-pre-wrap`. Don't over-engineer this into structured sub-models unless there's a clear need later.
-- Auto-save with debounce on the editor. No explicit "save" button.
-- The running order changeover calculation: parse `HH:MM` strings, diff in minutes between previous artist's `endTime` and next artist's `startTime`. Flag overlaps and zero-gaps.
+### Completed
+1. Event CRUD + position editor with draggable stage preview
+2. Position rotation, cloning, delete with undo
+3. Multi-select positions (Ctrl/Shift + marquee) with multi-drag and snap-to-grid
+4. Artist CRUD with all fields (including extra time slots, arrival, soundcheck)
+5. Stage plot SVG view with overflow handling and gear annotations
+6. FOH summary view with master input list
+7. Running order with multi-lane timeline and multi-column grid
+8. Midnight-crossing time handling
+9. Shareable read-only link
+10. Auto-save with snapshot persistence
+
+### Remaining
+- PDF export
+- Auth (currently using dev user stub)
+- Print stylesheet
 
 ## What This Is NOT
 
@@ -166,15 +184,3 @@ Use the same visual language as the web view. The PDF is what gets emailed if th
 - Not a venue management system
 - Not a ticketing or scheduling platform
 - No real-time collaboration needed (single editor per event is fine)
-
-## MVP Scope
-
-Build these first, in this order:
-1. Event CRUD + position editor with draggable stage preview
-2. Artist CRUD with all fields
-3. Stage plot SVG view
-4. FOH summary view
-5. Running order with timeline and changeover calc
-6. Shareable read-only link
-7. PDF export
-8. Auth (can be last — start with a single-user hardcoded setup if needed)
