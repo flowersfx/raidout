@@ -21,6 +21,7 @@ interface EventStore {
 
   // UI state
   activeTab: Tab;
+  selectedPositionId: string | null;
   expandedArtistId: string | null;
   dirty: boolean;
   saving: boolean;
@@ -47,6 +48,7 @@ interface EventStore {
 
   // UI actions
   setActiveTab(tab: Tab): void;
+  setSelectedPosition(id: string | null): void;
   setExpandedArtist(id: string | null): void;
   markDirty(): void;
   clearDirty(): void;
@@ -60,6 +62,7 @@ export const useEventStore = create<EventStore>((set) => ({
   artists: [],
   lastDeletedPosition: null,
   activeTab: "setup",
+  selectedPositionId: null,
   expandedArtistId: null,
   dirty: false,
   saving: false,
@@ -106,6 +109,7 @@ export const useEventStore = create<EventStore>((set) => ({
         lastDeletedPosition: deleted
           ? { position: deleted, artists: deletedArtists }
           : null,
+        selectedPositionId: s.selectedPositionId === id ? null : s.selectedPositionId,
         dirty: true,
       };
     }),
@@ -150,6 +154,7 @@ export const useEventStore = create<EventStore>((set) => ({
     })),
 
   setActiveTab: (tab) => set({ activeTab: tab }),
+  setSelectedPosition: (id) => set({ selectedPositionId: id }),
   setExpandedArtist: (id) => set({ expandedArtistId: id }),
   markDirty: () => set({ dirty: true }),
   clearDirty: () => set({ dirty: false }),

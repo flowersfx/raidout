@@ -12,14 +12,22 @@ interface Props {
 }
 
 export function PositionForm({ position }: Props) {
-  const { patchPosition, removePosition, clonePosition } = useEventStore();
+  const { patchPosition, removePosition, clonePosition, selectedPositionId, setSelectedPosition } = useEventStore();
   const uid = useId();
+  const isSelected = selectedPositionId === position.id;
 
   const patch = (fields: Partial<Position>) => patchPosition(position.id, fields);
 
   return (
-    <div className="p-3 border border-border rounded-lg bg-raised flex flex-col gap-2">
-      <div className="flex items-center justify-between gap-2">
+    <div
+      className="p-3 rounded-lg bg-raised flex flex-col gap-2 cursor-pointer transition-colors"
+      style={{
+        border: isSelected ? `2px solid ${position.color}` : "1px solid var(--border)",
+      }}
+      onClick={() => setSelectedPosition(isSelected ? null : position.id)}
+    >
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+      <div className="flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
         <input
           className="bg-transparent border-none text-sm font-semibold text-text focus:outline-none w-full"
           value={position.name}
