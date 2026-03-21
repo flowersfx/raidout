@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { useEventStore } from "@/store/eventStore";
 import { useStageDrag } from "@/hooks/useStageDrag";
 import type { Position, Artist } from "@/types/models";
@@ -56,6 +56,13 @@ function wrapText(text: string, width: number, fontSize: number): string[] {
   return lines;
 }
 
+interface SelectionRect {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
 export function StageSVG({
   mode,
   externalPositions,
@@ -66,25 +73,120 @@ export function StageSVG({
 }: Props) {
   const store = useEventStore();
   const svgRef = useRef<SVGSVGElement>(null);
-  const { onMouseDown, onMouseMove, onMouseUp } = useStageDrag(svgRef);
+  const { onMouseDown: onDragMouseDown, onMouseMove: onDragMouseMove, onMouseUp: onDragMouseUp, didDragRef } = useStageDrag(svgRef);
 
   const positions = externalPositions ?? store.positions;
   const artists = externalArtists ?? store.artists;
   const stageWidth = extWidth ?? store.event?.stageWidth ?? 800;
   const stageDepth = extDepth ?? store.event?.stageDepth ?? 400;
 
-  // Global mouse events for drag
+  // Selection rectangle state
+  const [selRect, setSelRect] = useState<SelectionRect | null>(null);
+  const selRectRef = useRef<SelectionRect | null>(null);
+  const isMarqueeRef = useRef(false);
+
+  const getSVGPoint = useCallback((clientX: number, clientY: number) => {
+    const svg = svgRef.current;
+    if (!svg) return { x: 0, y: 0 };
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return { x: 0, y: 0 };
+    return {
+      x: (clientX - ctm.e) / ctm.a,
+      y: (clientY - ctm.f) / ctm.d,
+    };
+  }, []);
+
+  // Handle background mousedown — start selection rectangle
+  const onBgMouseDown = useCallback((e: React.MouseEvent) => {
+    if (mode !== "edit") return;
+    // Only on the background, not on positions
+    const pt = getSVGPoint(e.clientX, e.clientY);
+    selRectRef.current = { x1: pt.x, y1: pt.y, x2: pt.x, y2: pt.y };
+    isMarqueeRef.current = false;
+    setSelRect(null);
+  }, [mode, getSVGPoint]);
+
+  // Global mouse events for drag + selection rectangle
   useEffect(() => {
     if (mode !== "edit") return;
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
+
+    function handleMouseMove(e: MouseEvent) {
+      // Selection rectangle
+      if (selRectRef.current) {
+        const pt = getSVGPoint(e.clientX, e.clientY);
+        const dx = Math.abs(pt.x - selRectRef.current.x1);
+        const dy = Math.abs(pt.y - selRectRef.current.y1);
+        if (dx > 3 || dy > 3) {
+          isMarqueeRef.current = true;
+        }
+        if (isMarqueeRef.current) {
+          selRectRef.current = { ...selRectRef.current, x2: pt.x, y2: pt.y };
+          setSelRect({ ...selRectRef.current });
+        }
+        return;
+      }
+      onDragMouseMove(e);
+    }
+
+    function handleMouseUp(e: MouseEvent) {
+      if (selRectRef.current) {
+        if (isMarqueeRef.current) {
+          // Compute which positions intersect the rectangle
+          const r = selRectRef.current;
+          const minX = Math.min(r.x1, r.x2);
+          const maxX = Math.max(r.x1, r.x2);
+          const minY = Math.min(r.y1, r.y2);
+          const maxY = Math.max(r.y1, r.y2);
+
+          const hit = positions.filter((pos) => {
+            const cx = pos.x + pos.width / 2;
+            const cy = pos.y + pos.height / 2;
+            return cx >= minX && cx <= maxX && cy >= minY && cy <= maxY;
+          });
+
+          if (hit.length > 0) {
+            if (e.ctrlKey || e.metaKey || e.shiftKey) {
+              // Add to existing selection
+              const next = new Set(store.selectedPositionIds);
+              hit.forEach((p) => next.add(p.id));
+              store.setSelectedPositionIds(next);
+            } else {
+              store.setSelectedPositionIds(new Set(hit.map((p) => p.id)));
+            }
+          } else if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+            store.setSelectedPosition(null);
+          }
+        } else {
+          // Click on background without drag — deselect
+          if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+            store.setSelectedPosition(null);
+          }
+        }
+        selRectRef.current = null;
+        isMarqueeRef.current = false;
+        setSelRect(null);
+        return;
+      }
+      onDragMouseUp();
+    }
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
     return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [mode, onMouseMove, onMouseUp]);
+  }, [mode, onDragMouseMove, onDragMouseUp, getSVGPoint, positions, store]);
 
   const totalHeight = stageDepth + FOH_LABEL_HEIGHT;
+
+  // Selection rectangle display coords
+  const selDisplay = selRect ? {
+    x: Math.min(selRect.x1, selRect.x2),
+    y: Math.min(selRect.y1, selRect.y2),
+    width: Math.abs(selRect.x2 - selRect.x1),
+    height: Math.abs(selRect.y2 - selRect.y1),
+  } : null;
 
   return (
     <svg
@@ -97,7 +199,7 @@ export function StageSVG({
       <rect
         x={0} y={0} width={stageWidth} height={stageDepth}
         fill="#111" stroke="#2a2a2a" strokeWidth={1}
-        onClick={mode === "edit" ? () => store.setSelectedPosition(null) : undefined}
+        onMouseDown={mode === "edit" ? onBgMouseDown : undefined}
       />
 
       {/* Grid lines */}
@@ -110,6 +212,7 @@ export function StageSVG({
           y2={stageDepth}
           stroke="#1e1e1e"
           strokeWidth={1}
+          style={{ pointerEvents: "none" }}
         />
       ))}
       {Array.from({ length: Math.floor(stageDepth / GRID_STEP) - 1 }, (_, i) => (
@@ -121,13 +224,14 @@ export function StageSVG({
           y2={(i + 1) * GRID_STEP}
           stroke="#1e1e1e"
           strokeWidth={1}
+          style={{ pointerEvents: "none" }}
         />
       ))}
 
       {/* Clip path definitions */}
       <defs>
         {positions.map((pos) => {
-          const isSelected = mode === "edit" && store.selectedPositionId === pos.id;
+          const isSelected = mode === "edit" && store.selectedPositionIds.has(pos.id);
           const assignedArtists = artists.filter((a) => a.positionId === pos.id);
           const lastAllowedBaseline = pos.height - PADDING_BOTTOM;
           const maxVisible = Math.max(0, Math.floor((lastAllowedBaseline - ARTIST_START_Y) / ARTIST_LINE_H) + 1);
@@ -155,7 +259,7 @@ export function StageSVG({
         const cx = pos.x + pos.width / 2;
         const cy = pos.y + pos.height / 2;
         const rotation = pos.rotation ?? 0;
-        const isSelected = mode === "edit" && store.selectedPositionId === pos.id;
+        const isSelected = mode === "edit" && store.selectedPositionIds.has(pos.id);
 
         // How many artist lines fit vertically?
         const lastAllowedBaseline = pos.height - PADDING_BOTTOM;
@@ -181,8 +285,26 @@ export function StageSVG({
           ? ARTIST_START_Y + totalWrappedLines * ARTIST_LINE_H + PADDING_BOTTOM
           : pos.height;
 
-        const handleClick = mode === "edit" ? () => {
-          store.setSelectedPosition(pos.id);
+        // All selection logic lives in mousedown; click only fires for
+        // plain clicks (no drag) on an already-selected position.
+        const handleClick = mode === "edit" ? (e: React.MouseEvent) => {
+          if (didDragRef.current) return;
+          if (e.ctrlKey || e.metaKey || e.shiftKey) return; // already handled in mousedown
+          // Plain click on an already-selected position when multi-selected → narrow to just this one
+          if (store.selectedPositionIds.size > 1 && store.selectedPositionIds.has(pos.id)) {
+            store.setSelectedPosition(pos.id);
+          }
+        } : undefined;
+
+        const handleMouseDown = mode === "edit" ? (e: React.MouseEvent) => {
+          const alreadySelected = store.selectedPositionIds.has(pos.id);
+          if (e.ctrlKey || e.metaKey || e.shiftKey) {
+            store.toggleSelectedPosition(pos.id);
+          } else if (!alreadySelected) {
+            store.setSelectedPosition(pos.id);
+          }
+          // Always start drag tracking (even if no movement occurs)
+          onDragMouseDown(e, pos);
         } : undefined;
 
         return (
@@ -198,7 +320,7 @@ export function StageSVG({
                   fill={pos.color + "22"}
                   rx={3}
                   style={mode === "edit" ? { cursor: "grab" } : undefined}
-                  onMouseDown={mode === "edit" ? (e) => onMouseDown(e, pos) : undefined}
+                  onMouseDown={handleMouseDown}
                   onClick={handleClick}
                 />
                 {/* Top + sides border (no bottom) using a path */}
@@ -233,7 +355,7 @@ export function StageSVG({
                 opacity={isSelected ? 1 : 0.5}
                 rx={3}
                 style={mode === "edit" ? { cursor: "grab" } : undefined}
-                onMouseDown={mode === "edit" ? (e) => onMouseDown(e, pos) : undefined}
+                onMouseDown={handleMouseDown}
                 onClick={handleClick}
               />
             )}
@@ -333,6 +455,21 @@ export function StageSVG({
           </g>
         );
       })}
+
+      {/* Selection rectangle */}
+      {selDisplay && selDisplay.width > 0 && selDisplay.height > 0 && (
+        <rect
+          x={selDisplay.x}
+          y={selDisplay.y}
+          width={selDisplay.width}
+          height={selDisplay.height}
+          fill="rgba(0, 229, 255, 0.08)"
+          stroke="#00e5ff"
+          strokeWidth={0.5}
+          strokeDasharray="4 2"
+          style={{ pointerEvents: "none" }}
+        />
+      )}
 
       {/* FOH label */}
       <rect

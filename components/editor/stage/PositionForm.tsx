@@ -12,9 +12,9 @@ interface Props {
 }
 
 export function PositionForm({ position }: Props) {
-  const { patchPosition, removePosition, clonePosition, selectedPositionId, setSelectedPosition } = useEventStore();
+  const { patchPosition, removePosition, clonePosition, selectedPositionIds, setSelectedPosition } = useEventStore();
   const uid = useId();
-  const isSelected = selectedPositionId === position.id;
+  const isSelected = selectedPositionIds.has(position.id);
   const [colorOpen, setColorOpen] = useState(false);
   const colorRef = useRef<HTMLDivElement>(null);
 

@@ -21,7 +21,8 @@ interface EventStore {
 
   // UI state
   activeTab: Tab;
-  selectedPositionId: string | null;
+  selectedPositionId: string | null;       // primary (last-clicked) for form display
+  selectedPositionIds: Set<string>;        // all selected positions
   expandedArtistId: string | null;
   dirty: boolean;
   saving: boolean;
@@ -49,6 +50,8 @@ interface EventStore {
   // UI actions
   setActiveTab(tab: Tab): void;
   setSelectedPosition(id: string | null): void;
+  toggleSelectedPosition(id: string): void;  // ctrl/shift click
+  setSelectedPositionIds(ids: Set<string>): void;
   setExpandedArtist(id: string | null): void;
   markDirty(): void;
   clearDirty(): void;
@@ -63,6 +66,7 @@ export const useEventStore = create<EventStore>((set) => ({
   lastDeletedPosition: null,
   activeTab: "setup",
   selectedPositionId: null,
+  selectedPositionIds: new Set<string>(),
   expandedArtistId: null,
   dirty: false,
   saving: false,
@@ -110,6 +114,7 @@ export const useEventStore = create<EventStore>((set) => ({
           ? { position: deleted, artists: deletedArtists }
           : null,
         selectedPositionId: s.selectedPositionId === id ? null : s.selectedPositionId,
+        selectedPositionIds: (() => { const n = new Set(s.selectedPositionIds); n.delete(id); return n; })(),
         dirty: true,
       };
     }),
@@ -154,7 +159,27 @@ export const useEventStore = create<EventStore>((set) => ({
     })),
 
   setActiveTab: (tab) => set({ activeTab: tab }),
-  setSelectedPosition: (id) => set({ selectedPositionId: id }),
+  setSelectedPosition: (id) => set({
+    selectedPositionId: id,
+    selectedPositionIds: id ? new Set([id]) : new Set(),
+  }),
+  toggleSelectedPosition: (id) => set((s) => {
+    const next = new Set(s.selectedPositionIds);
+    if (next.has(id)) {
+      next.delete(id);
+      return {
+        selectedPositionIds: next,
+        selectedPositionId: next.size > 0 ? [...next][next.size - 1] : null,
+      };
+    } else {
+      next.add(id);
+      return { selectedPositionIds: next, selectedPositionId: id };
+    }
+  }),
+  setSelectedPositionIds: (ids) => set({
+    selectedPositionIds: ids,
+    selectedPositionId: ids.size > 0 ? [...ids][ids.size - 1] : null,
+  }),
   setExpandedArtist: (id) => set({ expandedArtistId: id }),
   markDirty: () => set({ dirty: true }),
   clearDirty: () => set({ dirty: false }),

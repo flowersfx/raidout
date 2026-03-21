@@ -5,39 +5,48 @@ import { useEventStore } from "@/store/eventStore";
 import type { Position } from "@/types/models";
 
 interface DragState {
-  positionId: string;
   startMouseX: number;
   startMouseY: number;
-  startPosX: number;
-  startPosY: number;
+  // Snapshot of all dragged positions at drag start
+  positionStarts: { id: string; x: number; y: number }[];
 }
 
 export function useStageDrag(svgRef: React.RefObject<SVGSVGElement | null>) {
   const dragRef = useRef<DragState | null>(null);
-  const { patchPosition, event } = useEventStore();
+  const didDragRef = useRef(false);
+  const { patchPosition, event, positions, selectedPositionIds } = useEventStore();
 
   const stageWidth = event?.stageWidth ?? 800;
   const stageDepth = event?.stageDepth ?? 400;
 
-  const getSVGScale = useCallback(() => {
+  /** Convert a screen-pixel delta to SVG-unit delta using the SVG's CTM */
+  const screenToSVGDelta = useCallback((dxScreen: number, dyScreen: number) => {
     const svg = svgRef.current;
-    if (!svg) return { scaleX: 1, scaleY: 1 };
-    const rect = svg.getBoundingClientRect();
-    return {
-      scaleX: stageWidth / rect.width,
-      scaleY: stageDepth / rect.height,
-    };
-  }, [svgRef, stageWidth, stageDepth]);
+    if (!svg) return { dx: dxScreen, dy: dyScreen };
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return { dx: dxScreen, dy: dyScreen };
+    // CTM maps SVG coords → screen coords. Inverse maps screen → SVG.
+    return { dx: dxScreen / ctm.a, dy: dyScreen / ctm.d };
+  }, [svgRef]);
 
   const onMouseDown = useCallback(
     (e: React.MouseEvent, position: Position) => {
       e.preventDefault();
+      e.stopPropagation();
+
+      // Determine which positions to drag: all selected if clicked pos is in selection,
+      // otherwise just the clicked position
+      const selected = useEventStore.getState().selectedPositionIds;
+      const allPositions = useEventStore.getState().positions;
+      const dragging = selected.has(position.id)
+        ? allPositions.filter((p) => selected.has(p.id))
+        : [position];
+
+      didDragRef.current = false;
       dragRef.current = {
-        positionId: position.id,
         startMouseX: e.clientX,
         startMouseY: e.clientY,
-        startPosX: position.x,
-        startPosY: position.y,
+        positionStarts: dragging.map((p) => ({ id: p.id, x: p.x, y: p.y })),
       };
     },
     []
@@ -46,24 +55,25 @@ export function useStageDrag(svgRef: React.RefObject<SVGSVGElement | null>) {
   const onMouseMove = useCallback(
     (e: MouseEvent) => {
       if (!dragRef.current) return;
-      const { positionId, startMouseX, startMouseY, startPosX, startPosY } =
-        dragRef.current;
-      const { scaleX, scaleY } = getSVGScale();
+      const { startMouseX, startMouseY, positionStarts } = dragRef.current;
+      const { dx, dy } = screenToSVGDelta(e.clientX - startMouseX, e.clientY - startMouseY);
 
-      const dx = (e.clientX - startMouseX) * scaleX;
-      const dy = (e.clientY - startMouseY) * scaleY;
+      if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+        didDragRef.current = true;
+      }
 
-      const newX = Math.max(0, Math.round(startPosX + dx));
-      const newY = Math.max(0, Math.round(startPosY + dy));
-
-      patchPosition(positionId, { x: newX, y: newY });
+      for (const ps of positionStarts) {
+        const newX = Math.max(0, Math.round(ps.x + dx));
+        const newY = Math.max(0, Math.round(ps.y + dy));
+        patchPosition(ps.id, { x: newX, y: newY });
+      }
     },
-    [getSVGScale, patchPosition]
+    [screenToSVGDelta, patchPosition]
   );
 
   const onMouseUp = useCallback(() => {
     dragRef.current = null;
   }, []);
 
-  return { onMouseDown, onMouseMove, onMouseUp };
+  return { onMouseDown, onMouseMove, onMouseUp, didDragRef };
 }
