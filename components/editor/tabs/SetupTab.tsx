@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useId, useState, useCallback, useRef, useEffect } from "react";
+import React, { useId, useState, useCallback, useRef } from "react";
 import {
   DndContext,
   closestCenter,
@@ -107,14 +107,7 @@ export function SetupTab() {
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const addMenuRef = useRef<HTMLDivElement>(null);
 
-  const [showAddHint, setShowAddHint] = useState(false);
-  useEffect(() => {
-    if (positions.length === 0) {
-      setShowAddHint(true);
-      const t = setTimeout(() => setShowAddHint(false), 6000);
-      return () => clearTimeout(t);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const showAddHint = positions.length === 0;
 
   if (!event) return null;
 

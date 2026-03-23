@@ -45,9 +45,10 @@ model Position {
   color     String   @default("#00e5ff")
   rotation  Int      @default(0)
   sortOrder Int      @default(0)
-  showSize   Boolean  @default(true)
-  shape      String   @default("rectangular")
-  collapsed  Boolean  @default(false)
+  showSize    Boolean  @default(true)
+  showBorders Boolean  @default(true)
+  shape       String   @default("rectangular")
+  collapsed   Boolean  @default(false)
   artists   Artist[]
 }
 

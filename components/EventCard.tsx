@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition, useRef, useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -27,6 +26,7 @@ export function EventCard({ id, name, date, venue, onDuplicateStart }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const deleteFiredRef = useRef(false);
   const [isPendingDel, startDel] = useTransition();
+  const [isNavigating, startNavigate] = useTransition();
 
   useEffect(() => {
     if (flipped) {
@@ -123,10 +123,11 @@ export function EventCard({ id, name, date, venue, onDuplicateStart }: Props) {
                   <circle cx="4" cy="13" r="1.5" /><circle cx="8" cy="13" r="1.5" />
                 </svg>
               </button>
-              <Link
-                href={`/event/${id}`}
+              <button
                 tabIndex={flipped ? -1 : 0}
-                className="flex-1 flex items-center justify-between bg-surface border border-border rounded-lg px-5 py-4 hover:border-accent/40 hover:bg-raised transition-colors group"
+                disabled={isNavigating}
+                onClick={() => startNavigate(() => router.push(`/event/${id}`))}
+                className="flex-1 flex items-center justify-between bg-surface border border-border rounded-lg px-5 py-4 hover:border-accent/40 hover:bg-raised transition-colors group text-left disabled:opacity-60 disabled:cursor-wait"
               >
                 <div>
                   <p className="font-semibold text-text group-hover:text-accent transition-colors">
@@ -136,8 +137,8 @@ export function EventCard({ id, name, date, venue, onDuplicateStart }: Props) {
                     {formattedDate} &bull; {venue}
                   </p>
                 </div>
-                <span className="text-dim text-xs mono">→</span>
-              </Link>
+                <span className="text-dim text-xs mono">{isNavigating ? "…" : "→"}</span>
+              </button>
 
               <div className="flex flex-col gap-2">
                 <div className="flex gap-2">

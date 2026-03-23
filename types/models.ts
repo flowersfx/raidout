@@ -33,6 +33,7 @@ export interface Position {
   rotation: number;
   sortOrder: number;
   showSize: boolean;
+  showBorders: boolean;
   shape: string;
   collapsed: boolean;
 }

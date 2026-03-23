@@ -342,6 +342,7 @@ export function StageSVG({
         } : undefined;
 
         const isRound = pos.shape === "round";
+        const showBorders = pos.showBorders ?? true;
 
         return (
           <g key={pos.id} transform={rotation ? `rotate(${rotation} ${cx} ${cy})` : undefined}>
@@ -352,8 +353,8 @@ export function StageSVG({
                 cy={cy}
                 rx={pos.width / 2}
                 ry={pos.height / 2}
-                fill={pos.color + "22"}
-                stroke={pos.color}
+                fill={showBorders ? pos.color + "22" : "transparent"}
+                stroke={showBorders ? pos.color : "none"}
                 strokeWidth={isSelected ? 2 : 1.5}
                 opacity={isSelected ? 1 : 0.5}
                 style={mode === "edit" ? { cursor: "grab" } : undefined}
@@ -368,30 +369,32 @@ export function StageSVG({
                   y={pos.y}
                   width={pos.width}
                   height={expandedH}
-                  fill={pos.color + "22"}
+                  fill={showBorders ? pos.color + "22" : "transparent"}
                   rx={3}
                   style={mode === "edit" ? { cursor: "grab" } : undefined}
                   onMouseDown={handleMouseDown}
                   onClick={handleClick}
                 />
-                {/* Top + sides border (no bottom) using a path */}
-                <path
-                  d={`M ${pos.x},${pos.y + pos.height} L ${pos.x},${pos.y + 3} Q ${pos.x},${pos.y} ${pos.x + 3},${pos.y} L ${pos.x + pos.width - 3},${pos.y} Q ${pos.x + pos.width},${pos.y} ${pos.x + pos.width},${pos.y + 3} L ${pos.x + pos.width},${pos.y + pos.height}`}
-                  fill="none"
-                  stroke={pos.color}
-                  strokeWidth={2}
-                  style={{ pointerEvents: "none" }}
-                />
-                {/* Dashed sides + bottom for the overflow extension */}
-                <path
-                  d={`M ${pos.x},${pos.y + pos.height} L ${pos.x},${pos.y + expandedH - 3} Q ${pos.x},${pos.y + expandedH} ${pos.x + 3},${pos.y + expandedH} L ${pos.x + pos.width - 3},${pos.y + expandedH} Q ${pos.x + pos.width},${pos.y + expandedH} ${pos.x + pos.width},${pos.y + expandedH - 3} L ${pos.x + pos.width},${pos.y + pos.height}`}
-                  fill="none"
-                  stroke={pos.color}
-                  strokeWidth={1}
-                  strokeDasharray="3 2"
-                  opacity={0.5}
-                  style={{ pointerEvents: "none" }}
-                />
+                {showBorders && <>
+                  {/* Top + sides border (no bottom) using a path */}
+                  <path
+                    d={`M ${pos.x},${pos.y + pos.height} L ${pos.x},${pos.y + 3} Q ${pos.x},${pos.y} ${pos.x + 3},${pos.y} L ${pos.x + pos.width - 3},${pos.y} Q ${pos.x + pos.width},${pos.y} ${pos.x + pos.width},${pos.y + 3} L ${pos.x + pos.width},${pos.y + pos.height}`}
+                    fill="none"
+                    stroke={pos.color}
+                    strokeWidth={2}
+                    style={{ pointerEvents: "none" }}
+                  />
+                  {/* Dashed sides + bottom for the overflow extension */}
+                  <path
+                    d={`M ${pos.x},${pos.y + pos.height} L ${pos.x},${pos.y + expandedH - 3} Q ${pos.x},${pos.y + expandedH} ${pos.x + 3},${pos.y + expandedH} L ${pos.x + pos.width - 3},${pos.y + expandedH} Q ${pos.x + pos.width},${pos.y + expandedH} ${pos.x + pos.width},${pos.y + expandedH - 3} L ${pos.x + pos.width},${pos.y + pos.height}`}
+                    fill="none"
+                    stroke={pos.color}
+                    strokeWidth={1}
+                    strokeDasharray="3 2"
+                    opacity={0.5}
+                    style={{ pointerEvents: "none" }}
+                  />
+                </>}
               </>
             ) : (
               /* Normal rect */
@@ -400,8 +403,8 @@ export function StageSVG({
                 y={pos.y}
                 width={pos.width}
                 height={pos.height}
-                fill={pos.color + "22"}
-                stroke={pos.color}
+                fill={showBorders ? pos.color + "22" : "transparent"}
+                stroke={showBorders ? pos.color : "none"}
                 strokeWidth={isSelected ? 2 : 1.5}
                 opacity={isSelected ? 1 : 0.5}
                 rx={3}

@@ -183,6 +183,15 @@ export function PositionForm({ position, dragHandle }: Props) {
               />
               Show size
             </label>
+            <label className="flex items-center gap-1.5 text-xs text-muted cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={position.showBorders ?? true}
+                onChange={(e) => patch({ showBorders: e.target.checked })}
+                className="accent-accent"
+              />
+              Show borders
+            </label>
           </div>
         </>
       )}

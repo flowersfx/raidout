@@ -129,6 +129,7 @@ export async function duplicateEvent(id: string) {
           rotation: p.rotation,
           shape: p.shape,
           showSize: p.showSize,
+          showBorders: p.showBorders,
           sortOrder: p.sortOrder,
         },
       });
@@ -207,6 +208,7 @@ export async function saveEventSnapshot(snapshot: {
           rotation: p.rotation ?? 0,
           sortOrder: p.sortOrder ?? 0,
           showSize: p.showSize ?? true,
+          showBorders: p.showBorders ?? true,
           shape: p.shape ?? "rectangular",
           collapsed: p.collapsed ?? false,
         },
@@ -220,6 +222,7 @@ export async function saveEventSnapshot(snapshot: {
           rotation: p.rotation ?? 0,
           sortOrder: p.sortOrder ?? 0,
           showSize: p.showSize ?? true,
+          showBorders: p.showBorders ?? true,
           shape: p.shape ?? "rectangular",
           collapsed: p.collapsed ?? false,
         },
