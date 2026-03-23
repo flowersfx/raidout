@@ -91,14 +91,24 @@ export function SetupTab() {
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
   }, []);
-  const { event, positions, patchEvent, addPosition, reorderPositions, lastDeletedPositions, undoRemovePosition, snapEnabled, snapSize, setSnapEnabled, setSnapSize } = useEventStore();
+
+  const {
+    event, positions, stages, activeStageId,
+    patchEvent, addPosition, reorderPositions,
+    addStage, patchStage, removeStage, setActiveStageId,
+    lastDeletedPositions, undoRemovePosition,
+    snapEnabled, snapSize, setSnapEnabled, setSnapSize,
+  } = useEventStore();
+
+  const activeStage = stages.find((s) => s.id === activeStageId) ?? stages[0];
+  const stagePositions = positions.filter((p) => p.stageId === activeStage?.id);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   function handleDragEnd(e: DragEndEvent) {
     const { active, over } = e;
     if (!over || active.id === over.id) return;
-    const ids = positions.map((p) => p.id);
+    const ids = stagePositions.map((p) => p.id);
     const oldIndex = ids.indexOf(active.id as string);
     const newIndex = ids.indexOf(over.id as string);
     reorderPositions(arrayMove(ids, oldIndex, newIndex));
@@ -107,18 +117,19 @@ export function SetupTab() {
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const addMenuRef = useRef<HTMLDivElement>(null);
 
-  const showAddHint = positions.length === 0;
+  const showAddHint = stagePositions.length === 0;
 
-  if (!event) return null;
+  if (!event || !activeStage) return null;
 
   function handleAddPosition(shape: string = "rectangular") {
     const colorIndex = positions.length % POSITION_COLORS.length;
     addPosition({
       id: generateId(),
       eventId: event!.id,
-      name: `Position ${positions.length + 1}`,
-      x: 80 + (positions.length % 4) * 180,
-      y: 80 + Math.floor(positions.length / 4) * 120,
+      stageId: activeStage!.id,
+      name: `Position ${stagePositions.length + 1}`,
+      x: 80 + (stagePositions.length % 4) * 180,
+      y: 80 + Math.floor(stagePositions.length / 4) * 120,
       width: 140,
       height: shape === "round" ? 140 : 80,
       color: POSITION_COLORS[colorIndex],
@@ -130,6 +141,28 @@ export function SetupTab() {
       collapsed: false,
     });
     setAddMenuOpen(false);
+  }
+
+  function handleAddStage() {
+    const newStage = {
+      id: generateId(),
+      eventId: event!.id,
+      name: `Stage ${stages.length + 1}`,
+      stageWidth: 800,
+      stageDepth: 400,
+      fohPosition: "bottom",
+      sortOrder: stages.length,
+    };
+    addStage(newStage);
+  }
+
+  function handleRemoveStage(stageId: string) {
+    const posCount = positions.filter((p) => p.stageId === stageId).length;
+    const msg = posCount > 0
+      ? `Delete this stage and its ${posCount} position${posCount > 1 ? "s" : ""}? This cannot be undone.`
+      : "Delete this stage? This cannot be undone.";
+    if (!window.confirm(msg)) return;
+    removeStage(stageId);
   }
 
   return (
@@ -162,106 +195,143 @@ export function SetupTab() {
           </div>
         </section>
 
-        {/* Stage dimensions */}
+        {/* Stage selector + config */}
         <section>
-          <h2 className="text-xs text-muted uppercase tracking-wider mb-3">Stage</h2>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xs text-muted uppercase tracking-wider">
+              {stages.length > 1 ? "Stages" : "Stage"}
+            </h2>
+            <Button size="sm" variant="outline" onClick={handleAddStage}>
+              + Add Stage
+            </Button>
+          </div>
+
+          {/* Stage tabs — only shown when there are multiple stages */}
+          {stages.length > 1 && (
+            <div className="flex gap-1 mb-3 flex-wrap">
+              {stages.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => setActiveStageId(s.id)}
+                  className={`px-2.5 py-1 text-xs rounded-md border transition-colors ${
+                    s.id === activeStage.id
+                      ? "bg-accent/15 border-accent text-accent"
+                      : "border-border text-muted hover:text-text hover:border-border/80"
+                  }`}
+                >
+                  {s.name}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="flex flex-col gap-3">
             <Input
               id={`${uid}-sn`}
               label="Name"
-              value={event.stageName ?? "Stage"}
-              onChange={(e) => patchEvent({ stageName: e.target.value })}
+              value={activeStage.name}
+              onChange={(e) => patchStage(activeStage.id, { name: e.target.value })}
             />
             <div className="grid grid-cols-2 gap-2">
-            <div className="flex items-end gap-1.5">
-              <Input
-                id={`${uid}-sw`}
-                label="Width"
-                type="number"
-                min={200}
-                max={2000}
-                value={event.stageWidth}
-                onChange={(e) => patchEvent({ stageWidth: Number(e.target.value) })}
-              />
-              <span className="text-xs text-muted uppercase tracking-wider pb-2">cm</span>
-            </div>
-            <div className="flex items-end gap-1.5">
-              <Input
-                id={`${uid}-sd`}
-                label="Depth"
-                type="number"
-                min={100}
-                max={2000}
-                value={event.stageDepth}
-                onChange={(e) => patchEvent({ stageDepth: Number(e.target.value) })}
-              />
-              <span className="text-xs text-muted uppercase tracking-wider pb-2">cm</span>
-            </div>
-          </div>
-          {/* FOH compass (left) + Snap (right) share one row */}
-          <div className="flex items-start justify-between gap-2 mt-2">
-            {/* FOH position */}
-            <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-xs text-muted">FOH</span>
-              <div className="grid grid-cols-3 gap-0.5" style={{ width: 54 }}>
-              {[
-                [null,     "top",    null   ],
-                ["left",   "none",   "right"],
-                [null,     "bottom", null   ],
-              ].map((row, ri) =>
-                row.map((pos, ci) => {
-                  if (!pos) return <div key={`${ri}-${ci}`} />;
-                  const icons: Record<string, string> = { top: "↓", left: "→", right: "←", bottom: "↑", none: "✕" };
-                  const active = (event.fohPosition ?? "bottom") === pos;
-                  const isNone = pos === "none";
-                  return (
-                    <button
-                      key={pos}
-                      title={isNone ? "No FOH" : pos.charAt(0).toUpperCase() + pos.slice(1)}
-                      onClick={() => patchEvent({ fohPosition: pos })}
-                      className={`w-full aspect-square text-xs rounded transition-colors flex items-center justify-center ${
-                        active && isNone
-                          ? "bg-muted/20 text-muted border border-muted"
-                          : active
-                          ? "bg-accent/20 text-accent border border-accent"
-                          : "text-muted hover:bg-hover border border-border"
-                      }`}
-                    >
-                      {icons[pos]}
-                    </button>
-                  );
-                })
-              )}
-              </div>
-            </div>{/* end FOH wrapper */}
-            <div className="flex items-center gap-2 flex-wrap justify-end">
-              <label className="flex items-center gap-1.5 text-xs text-muted cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={snapEnabled}
-                  onChange={(e) => setSnapEnabled(e.target.checked)}
-                  className="accent-accent"
+              <div className="flex items-end gap-1.5">
+                <Input
+                  id={`${uid}-sw`}
+                  label="Width"
+                  type="number"
+                  min={200}
+                  max={2000}
+                  value={activeStage.stageWidth}
+                  onChange={(e) => patchStage(activeStage.id, { stageWidth: Number(e.target.value) })}
                 />
-                Snap
-              </label>
-              {snapEnabled && (
-                <>
-                  <Input
-                    id={`${uid}-snap`}
-                    inline
-                    type="number"
-                    min={1}
-                    max={100}
-                    value={snapSize}
-                    onChange={(e) => setSnapSize(Math.max(1, Number(e.target.value)))}
-                    className="w-16 text-xs"
-                  />
-                  <span className="text-xs text-muted uppercase tracking-wider">cm</span>
-                </>
-              )}
+                <span className="text-xs text-muted uppercase tracking-wider pb-2">cm</span>
+              </div>
+              <div className="flex items-end gap-1.5">
+                <Input
+                  id={`${uid}-sd`}
+                  label="Depth"
+                  type="number"
+                  min={100}
+                  max={2000}
+                  value={activeStage.stageDepth}
+                  onChange={(e) => patchStage(activeStage.id, { stageDepth: Number(e.target.value) })}
+                />
+                <span className="text-xs text-muted uppercase tracking-wider pb-2">cm</span>
+              </div>
             </div>
-          </div>{/* end FOH+snap row */}
-          </div>{/* end flex-col gap-3 */}
+
+            {/* FOH compass (left) + Snap (right) */}
+            <div className="flex items-start justify-between gap-2 mt-2">
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-xs text-muted">FOH</span>
+                <div className="grid grid-cols-3 gap-0.5" style={{ width: 54 }}>
+                  {[
+                    [null,     "top",    null   ],
+                    ["left",   "none",   "right"],
+                    [null,     "bottom", null   ],
+                  ].map((row, ri) =>
+                    row.map((pos, ci) => {
+                      if (!pos) return <div key={`${ri}-${ci}`} />;
+                      const icons: Record<string, string> = { top: "↓", left: "→", right: "←", bottom: "↑", none: "✕" };
+                      const active = (activeStage.fohPosition ?? "bottom") === pos;
+                      const isNone = pos === "none";
+                      return (
+                        <button
+                          key={pos}
+                          title={isNone ? "No FOH" : pos.charAt(0).toUpperCase() + pos.slice(1)}
+                          onClick={() => patchStage(activeStage.id, { fohPosition: pos })}
+                          className={`w-full aspect-square text-xs rounded transition-colors flex items-center justify-center ${
+                            active && isNone
+                              ? "bg-muted/20 text-muted border border-muted"
+                              : active
+                              ? "bg-accent/20 text-accent border border-accent"
+                              : "text-muted hover:bg-hover border border-border"
+                          }`}
+                        >
+                          {icons[pos]}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap justify-end">
+                <label className="flex items-center gap-1.5 text-xs text-muted cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={snapEnabled}
+                    onChange={(e) => setSnapEnabled(e.target.checked)}
+                    className="accent-accent"
+                  />
+                  Snap
+                </label>
+                {snapEnabled && (
+                  <>
+                    <Input
+                      id={`${uid}-snap`}
+                      inline
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={snapSize}
+                      onChange={(e) => setSnapSize(Math.max(1, Number(e.target.value)))}
+                      className="w-16 text-xs"
+                    />
+                    <span className="text-xs text-muted uppercase tracking-wider">cm</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Delete stage — only when there are multiple */}
+            {stages.length > 1 && (
+              <button
+                onClick={() => handleRemoveStage(activeStage.id)}
+                className="self-start text-xs text-danger hover:text-danger/80 transition-colors mt-1"
+              >
+                Delete this stage
+              </button>
+            )}
+          </div>
         </section>
 
         {/* Positions */}
@@ -293,19 +363,19 @@ export function SetupTab() {
               )}
             </div>
           </div>
-          {positions.length === 0 && (
+          {stagePositions.length === 0 && (
             <div className="border border-border rounded-lg px-4 py-6 text-center">
               <p className="text-sm text-muted">No positions yet.</p>
               <p className="text-xs text-dim mt-1">Add a rectangular or round position to start building your stage layout.</p>
             </div>
           )}
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={positions.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+            <SortableContext items={stagePositions.map((p) => p.id)} strategy={verticalListSortingStrategy}>
               {(() => {
                 const toastIndex = lastDeletedPositions.length > 0
                   ? lastDeletedPositions[0].index
                   : -1;
-                const items: React.ReactNode[] = positions.map((pos) => (
+                const items: React.ReactNode[] = stagePositions.map((pos) => (
                   <SortablePositionRow key={pos.id} position={pos} />
                 ));
                 if (toastIndex >= 0) {
@@ -338,11 +408,17 @@ export function SetupTab() {
       {/* Right panel: live stage preview */}
       <div className="flex-1 flex flex-col p-4 gap-2 overflow-hidden">
         <p className="text-xs text-muted uppercase tracking-wider flex-shrink-0">
-          {event?.stageName ?? "Stage"} Preview
+          {activeStage.name} Preview
         </p>
         <div className="flex-1 min-h-0 flex items-center justify-center">
           <div className="w-full h-full max-h-full">
-            <StageSVG mode="edit" />
+            <StageSVG
+              mode="edit"
+              stageWidth={activeStage.stageWidth}
+              stageDepth={activeStage.stageDepth}
+              fohPosition={activeStage.fohPosition}
+              filterStageId={activeStage.id}
+            />
           </div>
         </div>
       </div>

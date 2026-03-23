@@ -14,10 +14,7 @@ interface DragState {
 export function useStageDrag(svgRef: React.RefObject<SVGSVGElement | null>) {
   const dragRef = useRef<DragState | null>(null);
   const didDragRef = useRef(false);
-  const { patchPosition, event, positions, selectedPositionIds } = useEventStore();
-
-  const stageWidth = event?.stageWidth ?? 800;
-  const stageDepth = event?.stageDepth ?? 400;
+  const { patchPosition } = useEventStore();
 
   /** Convert a screen-pixel delta to SVG-unit delta using the SVG's CTM */
   const screenToSVGDelta = useCallback((dxScreen: number, dyScreen: number) => {

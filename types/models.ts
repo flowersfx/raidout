@@ -12,19 +12,26 @@ export interface Event {
   name: string;
   date: string; // ISO string (serialized from DateTime)
   venue: string;
-  stageWidth: number;
-  stageDepth: number;
   shareToken: string;
-  stageName: string;
-  fohPosition: string;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
 }
 
+export interface Stage {
+  id: string;
+  eventId: string;
+  name: string;
+  stageWidth: number;
+  stageDepth: number;
+  fohPosition: string;
+  sortOrder: number;
+}
+
 export interface Position {
   id: string;
   eventId: string;
+  stageId: string;
   name: string;
   x: number;
   y: number;

@@ -18,10 +18,12 @@ export default async function EventPage({ params }: Props) {
       date: event.date.toISOString(),
       createdAt: event.createdAt.toISOString(),
       updatedAt: event.updatedAt.toISOString(),
+      stages: undefined,
       positions: undefined,
       artists: undefined,
       user: undefined,
     },
+    stages: event.stages,
     positions: event.positions,
     artists: event.artists,
   };

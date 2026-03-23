@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getOrCreateUserId } from "@/lib/identity";
-import type { Event, Position, Artist } from "@/types/models";
+import type { Event, Stage, Position, Artist } from "@/types/models";
 
 export async function getEvents() {
   const userId = await getOrCreateUserId();
@@ -26,6 +26,7 @@ export async function getEvent(id: string) {
   return prisma.event.findUnique({
     where: { id },
     include: {
+      stages: { orderBy: { sortOrder: "asc" } },
       positions: { orderBy: { sortOrder: "asc" } },
       artists: { orderBy: { sortOrder: "asc" } },
     },
@@ -36,6 +37,7 @@ export async function getEventByShareToken(token: string) {
   return prisma.event.findUnique({
     where: { shareToken: token },
     include: {
+      stages: { orderBy: { sortOrder: "asc" } },
       positions: { orderBy: { sortOrder: "asc" } },
       artists: { orderBy: { sortOrder: "asc" } },
     },
@@ -54,6 +56,15 @@ export async function createEvent(data: {
       date: new Date(data.date),
       venue: data.venue,
       createdBy: userId,
+      stages: {
+        create: {
+          name: "Stage",
+          stageWidth: 800,
+          stageDepth: 400,
+          fohPosition: "bottom",
+          sortOrder: 0,
+        },
+      },
     },
   });
   revalidatePath("/");
@@ -62,7 +73,7 @@ export async function createEvent(data: {
 
 export async function updateEventMeta(
   id: string,
-  data: Partial<Pick<Event, "name" | "date" | "venue" | "stageWidth" | "stageDepth">>
+  data: Partial<Pick<Event, "name" | "date" | "venue">>
 ) {
   const updated = await prisma.event.update({
     where: { id },
@@ -70,8 +81,6 @@ export async function updateEventMeta(
       ...(data.name !== undefined && { name: data.name }),
       ...(data.date !== undefined && { date: new Date(data.date) }),
       ...(data.venue !== undefined && { venue: data.venue }),
-      ...(data.stageWidth !== undefined && { stageWidth: data.stageWidth }),
-      ...(data.stageDepth !== undefined && { stageDepth: data.stageDepth }),
     },
   });
   revalidatePath(`/event/${id}`);
@@ -107,20 +116,35 @@ export async function duplicateEvent(id: string) {
         name: `${source.name} (copy)`,
         date: source.date,
         venue: source.venue,
-        stageWidth: source.stageWidth,
-        stageDepth: source.stageDepth,
-        stageName: source.stageName,
-        fohPosition: source.fohPosition,
         createdBy: userId,
-        sortOrder: sourceIndex * 10 + 5, // slots between source and next
+        sortOrder: sourceIndex * 10 + 5,
       },
     });
 
+    // Copy stages, building a map from source stage id → new stage id
+    const stageIdMap = new Map<string, string>();
+    for (const s of source.stages) {
+      const created = await tx.stage.create({
+        data: {
+          eventId: copy.id,
+          name: s.name,
+          stageWidth: s.stageWidth,
+          stageDepth: s.stageDepth,
+          fohPosition: s.fohPosition,
+          sortOrder: s.sortOrder,
+        },
+      });
+      stageIdMap.set(s.id, created.id);
+    }
+
+    // Copy positions
     const positionIdMap = new Map<string, string>();
     for (const p of source.positions) {
+      const newStageId = stageIdMap.get(p.stageId) ?? [...stageIdMap.values()][0];
       const created = await tx.position.create({
         data: {
           eventId: copy.id,
+          stageId: newStageId,
           name: p.name,
           x: p.x,
           y: p.y,
@@ -166,14 +190,15 @@ export async function duplicateEvent(id: string) {
 
 /**
  * Full snapshot save — called by auto-save.
- * Overwrites all positions and artists for the event atomically.
+ * Atomically syncs all stages, positions, and artists for the event.
  */
 export async function saveEventSnapshot(snapshot: {
   event: Event;
+  stages: Stage[];
   positions: Position[];
   artists: Artist[];
 }) {
-  const { event, positions, artists } = snapshot;
+  const { event, stages, positions, artists } = snapshot;
 
   await prisma.$transaction(async (tx) => {
     // Update event meta
@@ -183,12 +208,35 @@ export async function saveEventSnapshot(snapshot: {
         name: event.name,
         date: new Date(event.date),
         venue: event.venue,
-        stageWidth: event.stageWidth,
-        stageDepth: event.stageDepth,
-        stageName: event.stageName ?? "Stage",
-        fohPosition: event.fohPosition ?? "bottom",
       },
     });
+
+    // Sync stages: upsert all, delete removed ones
+    const stageIds = stages.map((s) => s.id);
+    await tx.stage.deleteMany({
+      where: { eventId: event.id, id: { notIn: stageIds } },
+    });
+    for (const s of stages) {
+      await tx.stage.upsert({
+        where: { id: s.id },
+        create: {
+          id: s.id,
+          eventId: event.id,
+          name: s.name,
+          stageWidth: s.stageWidth,
+          stageDepth: s.stageDepth,
+          fohPosition: s.fohPosition,
+          sortOrder: s.sortOrder ?? 0,
+        },
+        update: {
+          name: s.name,
+          stageWidth: s.stageWidth,
+          stageDepth: s.stageDepth,
+          fohPosition: s.fohPosition,
+          sortOrder: s.sortOrder ?? 0,
+        },
+      });
+    }
 
     // Sync positions: upsert all, delete removed ones
     const positionIds = positions.map((p) => p.id);
@@ -201,6 +249,7 @@ export async function saveEventSnapshot(snapshot: {
         create: {
           id: p.id,
           eventId: event.id,
+          stageId: p.stageId,
           name: p.name,
           x: p.x,
           y: p.y,
@@ -215,6 +264,7 @@ export async function saveEventSnapshot(snapshot: {
           collapsed: p.collapsed ?? false,
         },
         update: {
+          stageId: p.stageId,
           name: p.name,
           x: p.x,
           y: p.y,
@@ -278,8 +328,20 @@ export async function saveEventSnapshot(snapshot: {
   });
 }
 
+// ─── Export / Import ──────────────────────────────────────────────────────────
+
+type EventExportStage = {
+  _ref: string;
+  name: string;
+  stageWidth: number;
+  stageDepth: number;
+  fohPosition: string;
+  sortOrder: number;
+};
+
 type EventExportPosition = {
   _ref: string;
+  stageRef: string;
   name: string;
   x: number;
   y: number;
@@ -313,10 +375,13 @@ export type EventExport = {
     name: string;
     date: string | Date;
     venue: string;
-    stageWidth: number;
-    stageDepth: number;
+    // v1 legacy fields (single stage)
+    stageWidth?: number;
+    stageDepth?: number;
   };
-  positions: EventExportPosition[];
+  // v2: stages array; v1: absent (single stage inferred from event fields)
+  stages?: EventExportStage[];
+  positions: (EventExportPosition & { stageRef?: string })[];
   artists: EventExportArtist[];
 };
 
@@ -329,19 +394,55 @@ export async function importEvent(data: EventExport) {
         name: data.event.name,
         date: new Date(data.event.date),
         venue: data.event.venue,
-        stageWidth: data.event.stageWidth,
-        stageDepth: data.event.stageDepth,
         createdBy: userId,
       },
     });
 
-    // Build a map from export _ref -> new position id
-    const refToId = new Map<string, string>();
+    // Build stage ref → new stage id map
+    const stageRefToId = new Map<string, string>();
 
+    if (data.stages && data.stages.length > 0) {
+      // v2: explicit stages array
+      for (const s of data.stages) {
+        const created = await tx.stage.create({
+          data: {
+            eventId: event.id,
+            name: s.name,
+            stageWidth: s.stageWidth,
+            stageDepth: s.stageDepth,
+            fohPosition: s.fohPosition,
+            sortOrder: s.sortOrder,
+          },
+        });
+        stageRefToId.set(s._ref, created.id);
+      }
+    } else {
+      // v1 legacy: single stage from event fields
+      const created = await tx.stage.create({
+        data: {
+          eventId: event.id,
+          name: "Stage",
+          stageWidth: data.event.stageWidth ?? 800,
+          stageDepth: data.event.stageDepth ?? 400,
+          fohPosition: "bottom",
+          sortOrder: 0,
+        },
+      });
+      stageRefToId.set("__default__", created.id);
+    }
+
+    const defaultStageId = [...stageRefToId.values()][0];
+
+    // Build position ref → new position id map
+    const refToId = new Map<string, string>();
     for (const p of data.positions) {
+      const stageId = p.stageRef
+        ? (stageRefToId.get(p.stageRef) ?? defaultStageId)
+        : defaultStageId;
       const created = await tx.position.create({
         data: {
           eventId: event.id,
+          stageId,
           name: p.name,
           x: p.x,
           y: p.y,

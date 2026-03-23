@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import type { Event, Position, Artist } from "@/types/models";
+import type { Event, Stage, Position, Artist } from "@/types/models";
 
 type Tab = "setup" | "artists" | "plot" | "foh" | "order";
 
@@ -19,6 +19,7 @@ interface DeletedArtist {
 interface EventStore {
   // Data
   event: Event | null;
+  stages: Stage[];
   positions: Position[];
   artists: Artist[];
 
@@ -28,6 +29,7 @@ interface EventStore {
 
   // UI state
   activeTab: Tab;
+  activeStageId: string | null;
   selectedPositionId: string | null;       // primary (last-clicked) for form display
   selectedPositionIds: Set<string>;        // all selected positions
   expandedArtistId: string | null;
@@ -40,6 +42,13 @@ interface EventStore {
   // Event actions
   setEvent(e: Event): void;
   patchEvent(fields: Partial<Event>): void;
+
+  // Stage actions
+  setStages(s: Stage[]): void;
+  addStage(s: Stage): void;
+  patchStage(id: string, fields: Partial<Stage>): void;
+  removeStage(id: string): void;
+  setActiveStageId(id: string | null): void;
 
   // Position actions
   setPositions(p: Position[]): void;
@@ -75,11 +84,13 @@ interface EventStore {
 
 export const useEventStore = create<EventStore>((set) => ({
   event: null,
+  stages: [],
   positions: [],
   artists: [],
   lastDeletedPositions: [],
   lastDeletedArtist: null,
   activeTab: "setup",
+  activeStageId: null,
   selectedPositionId: null,
   selectedPositionIds: new Set<string>(),
   expandedArtistId: null,
@@ -95,6 +106,48 @@ export const useEventStore = create<EventStore>((set) => ({
       event: s.event ? { ...s.event, ...fields } : s.event,
       dirty: true,
     })),
+
+  setStages: (stages) =>
+    set({ stages, activeStageId: stages[0]?.id ?? null }),
+  addStage: (stage) =>
+    set((s) => ({
+      stages: [...s.stages, stage],
+      activeStageId: stage.id,
+      dirty: true,
+    })),
+  patchStage: (id, fields) =>
+    set((s) => ({
+      stages: s.stages.map((st) => (st.id === id ? { ...st, ...fields } : st)),
+      dirty: true,
+    })),
+  removeStage: (id) =>
+    set((s) => {
+      const removedPositionIds = new Set(
+        s.positions.filter((p) => p.stageId === id).map((p) => p.id)
+      );
+      const newStages = s.stages.filter((st) => st.id !== id);
+      return {
+        stages: newStages,
+        positions: s.positions.filter((p) => p.stageId !== id),
+        artists: s.artists.map((a) =>
+          removedPositionIds.has(a.positionId ?? "") ? { ...a, positionId: null } : a
+        ),
+        activeStageId:
+          s.activeStageId === id ? (newStages[0]?.id ?? null) : s.activeStageId,
+        selectedPositionId:
+          s.selectedPositionId && removedPositionIds.has(s.selectedPositionId)
+            ? null
+            : s.selectedPositionId,
+        selectedPositionIds: (() => {
+          const n = new Set(s.selectedPositionIds);
+          removedPositionIds.forEach((pid) => n.delete(pid));
+          return n;
+        })(),
+        dirty: true,
+      };
+    }),
+  setActiveStageId: (id) =>
+    set({ activeStageId: id, selectedPositionId: null, selectedPositionIds: new Set() }),
 
   setPositions: (p) => set({ positions: p }),
   addPosition: (p) =>
@@ -157,7 +210,6 @@ export const useEventStore = create<EventStore>((set) => ({
     set((s) => {
       if (s.lastDeletedPositions.length === 0) return s;
       let artists = [...s.artists];
-      const restoredPositions = s.lastDeletedPositions.map((d) => d.position);
       for (const { position, artists: deletedArtists } of s.lastDeletedPositions) {
         artists = artists.map((a) => {
           const restored = deletedArtists.find((da) => da.id === a.id);

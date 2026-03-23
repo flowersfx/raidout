@@ -13,7 +13,8 @@ interface Props {
 
 export function ArtistForm({ artist }: Props) {
   const uid = useId();
-  const { positions, patchArtist, removeArtist, addArtist, artists } = useEventStore();
+  const { positions, stages, patchArtist, removeArtist, addArtist, artists } = useEventStore();
+  const multiStage = stages.length > 1;
 
   const patch = (fields: Partial<Artist>) => patchArtist(artist.id, fields);
 
@@ -74,11 +75,16 @@ export function ArtistForm({ artist }: Props) {
             className="w-full bg-raised border border-border rounded px-3 py-1.5 text-sm text-text focus:outline-none focus:border-accent transition-colors"
           >
             <option value="">— Unassigned —</option>
-            {positions.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
+            {positions.map((p) => {
+              const stageName = multiStage
+                ? (stages.find((s) => s.id === p.stageId)?.name ?? "")
+                : null;
+              return (
+                <option key={p.id} value={p.id}>
+                  {stageName ? `${stageName} — ${p.name}` : p.name}
+                </option>
+              );
+            })}
           </select>
         </div>
         <Input

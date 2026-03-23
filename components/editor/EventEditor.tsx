@@ -11,11 +11,12 @@ import { StagePlotTab } from "./tabs/StagePlotTab";
 import { FOHTab } from "./tabs/FOHTab";
 import { RunningOrderTab } from "./tabs/RunningOrderTab";
 import { cn } from "@/lib/utils/cn";
-import type { Event, Position, Artist } from "@/types/models";
+import type { Event, Stage, Position, Artist } from "@/types/models";
 
 interface Props {
   initial: {
     event: Event;
+    stages: Stage[];
     positions: Position[];
     artists: Artist[];
   };
@@ -30,12 +31,13 @@ const TABS = [
 ];
 
 export function EventEditor({ initial }: Props) {
-  const { setEvent, setPositions, setArtists, activeTab, setActiveTab, event, removeSelectedPositions } =
+  const { setEvent, setStages, setPositions, setArtists, activeTab, setActiveTab, event, removeSelectedPositions } =
     useEventStore();
 
   // Hydrate store from server data on mount
   useEffect(() => {
     setEvent(initial.event);
+    setStages(initial.stages);
     setPositions(initial.positions);
     setArtists(initial.artists);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

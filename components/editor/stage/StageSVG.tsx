@@ -16,6 +16,7 @@ interface Props {
   fohPosition?: string;
   annotateGear?: boolean; // show first gear line near each position
   printMode?: boolean;    // white-background print/PDF mode
+  filterStageId?: string; // only render positions belonging to this stage (edit/view store mode)
 }
 
 const GRID_STEP = 100; // grid lines every 100 cm
@@ -77,17 +78,21 @@ export function StageSVG({
   fohPosition: extFohPosition,
   annotateGear = false,
   printMode = false,
+  filterStageId,
 }: Props) {
   const store = useEventStore();
   const svgRef = useRef<SVGSVGElement>(null);
   const { onMouseDown: onDragMouseDown, onMouseMove: onDragMouseMove, onMouseUp: onDragMouseUp, didDragRef } = useStageDrag(svgRef);
   const { onResizeMouseDown, onRotateMouseDown, onHandleMouseMove, onHandleMouseUp, resizeRef, rotateRef } = useStageHandles(svgRef);
 
-  const positions = externalPositions ?? store.positions;
+  const allPositions = externalPositions ?? store.positions;
+  const positions = filterStageId
+    ? allPositions.filter((p) => p.stageId === filterStageId)
+    : allPositions;
   const artists = externalArtists ?? store.artists;
-  const stageWidth = extWidth ?? store.event?.stageWidth ?? 800;
-  const stageDepth = extDepth ?? store.event?.stageDepth ?? 400;
-  const fohPosition = extFohPosition ?? store.event?.fohPosition ?? "bottom";
+  const stageWidth = extWidth ?? 800;
+  const stageDepth = extDepth ?? 400;
+  const fohPosition = extFohPosition ?? "bottom";
 
   // Compute stage offset and total SVG dimensions based on FOH strip position
   const fohHidden    = fohPosition === "none";

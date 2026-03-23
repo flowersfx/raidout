@@ -7,7 +7,7 @@ import { saveEventSnapshot } from "@/lib/actions/events";
 const DEBOUNCE_MS = 800;
 
 export function useAutoSave() {
-  const { event, positions, artists, dirty, clearDirty, setSaving, setSaveError } =
+  const { event, stages, positions, artists, dirty, clearDirty, setSaving, setSaveError } =
     useEventStore();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -20,7 +20,7 @@ export function useAutoSave() {
       setSaving(true);
       setSaveError(null);
       try {
-        await saveEventSnapshot({ event, positions, artists });
+        await saveEventSnapshot({ event, stages, positions, artists });
         clearDirty();
       } catch (err) {
         setSaveError(err instanceof Error ? err.message : "Save failed");
@@ -32,5 +32,5 @@ export function useAutoSave() {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [dirty, event, positions, artists, clearDirty, setSaving, setSaveError]);
+  }, [dirty, event, stages, positions, artists, clearDirty, setSaving, setSaveError]);
 }

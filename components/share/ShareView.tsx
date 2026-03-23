@@ -3,37 +3,37 @@ import { FOHArtistCard } from "@/components/editor/foh/FOHArtistCard";
 import { MasterInputList } from "@/components/editor/foh/MasterInputList";
 import { RunningOrderGrid } from "@/components/editor/running-order/RunningOrderGrid";
 import { sortableStartTime } from "@/lib/utils/time";
-import { getAllSlots, type Event, type Position, type Artist } from "@/types/models";
+import { getAllSlots, type Event, type Stage, type Position, type Artist } from "@/types/models";
 
 // FOH_LABEL_HEIGHT must match StageSVG constant
 const FOH_LABEL_HEIGHT = 24;
 
 interface Props {
   event: Event;
+  stages: Stage[];
   positions: Position[];
   artists: Artist[];
   printMode?: boolean;
 }
 
-export function ShareView({ event, positions, artists, printMode = false }: Props) {
+function stageAspectRatio(stage: Stage): number {
+  const fohHidden = stage.fohPosition === "none";
+  const isVertical = stage.fohPosition === "left" || stage.fohPosition === "right";
+  if (fohHidden) return stage.stageWidth / stage.stageDepth;
+  if (isVertical) return (stage.stageWidth + FOH_LABEL_HEIGHT) / stage.stageDepth;
+  return stage.stageWidth / (stage.stageDepth + FOH_LABEL_HEIGHT);
+}
+
+export function ShareView({ event, stages, positions, artists, printMode = false }: Props) {
   const allStartTimes = artists.flatMap((a) => getAllSlots(a).map((s) => s.startTime));
   const sorted = [...artists].sort((a, b) =>
     sortableStartTime(a.startTime, allStartTimes) - sortableStartTime(b.startTime, allStartTimes)
   );
 
-  const fohPos = event.fohPosition ?? "bottom";
-  const fohHidden = fohPos === "none";
-  const isVerticalFoh = fohPos === "left" || fohPos === "right";
-  const stageAspect = fohHidden
-    ? event.stageWidth / event.stageDepth
-    : isVerticalFoh
-    ? (event.stageWidth + FOH_LABEL_HEIGHT) / event.stageDepth
-    : event.stageWidth / (event.stageDepth + FOH_LABEL_HEIGHT);
-
   return (
     <div className="py-8 flex flex-col gap-10">
 
-      {/* Event header — constrained width */}
+      {/* Event header */}
       <header className="max-w-6xl mx-auto w-full px-6 border-b border-border pb-6">
         <h1 className="text-2xl font-bold text-text">{event.name}</h1>
         <p className="text-muted mt-1">
@@ -46,37 +46,43 @@ export function ShareView({ event, positions, artists, printMode = false }: Prop
           &bull; {event.venue}
         </p>
         <p className="text-xs text-dim mono mt-2">
-          Stage: {event.stageWidth}×{event.stageDepth} cm &bull;{" "}
+          {stages.length} stage{stages.length > 1 ? "s" : ""} &bull;{" "}
           {positions.length} positions &bull; {artists.length} artists
         </p>
       </header>
 
-      {/* Stage plot — constrained width */}
-      <section className="max-w-6xl mx-auto w-full px-6">
-        <h2 className="text-xs text-muted uppercase tracking-wider mb-3">{event.stageName ?? "Stage"} Plot</h2>
-        <div
-          className={`border border-border rounded-lg overflow-hidden w-full ${printMode ? "bg-white" : "bg-[#111]"}`}
-          style={{ aspectRatio: stageAspect }}
-        >
-          <StageSVG
-            mode="view"
-            externalPositions={positions}
-            externalArtists={artists}
-            stageWidth={event.stageWidth}
-            stageDepth={event.stageDepth}
-            fohPosition={fohPos}
-            annotateGear
-            printMode={printMode}
-          />
-        </div>
-      </section>
+      {/* One stage plot section per stage */}
+      {stages.map((stage) => {
+        const stagePositions = positions.filter((p) => p.stageId === stage.id);
+        const aspectRatio = stageAspectRatio(stage);
+        return (
+          <section key={stage.id} className="max-w-6xl mx-auto w-full px-6">
+            <h2 className="text-xs text-muted uppercase tracking-wider mb-3">{stage.name} Plot</h2>
+            <div
+              className={`border border-border rounded-lg overflow-hidden w-full ${printMode ? "bg-white" : "bg-[#111]"}`}
+              style={{ aspectRatio }}
+            >
+              <StageSVG
+                mode="view"
+                externalPositions={stagePositions}
+                externalArtists={artists}
+                stageWidth={stage.stageWidth}
+                stageDepth={stage.stageDepth}
+                fohPosition={stage.fohPosition}
+                annotateGear
+                printMode={printMode}
+              />
+            </div>
+          </section>
+        );
+      })}
 
-      {/* Running order — constrained width */}
+      {/* Running order — spans all stages */}
       <section className="max-w-6xl mx-auto w-full px-6">
         <RunningOrderGrid artists={sorted} positions={positions} />
       </section>
 
-      {/* FOH artist cards — constrained width */}
+      {/* FOH artist cards — spans all stages */}
       <section className="max-w-6xl mx-auto w-full px-6">
         <h2 className="text-xs text-muted uppercase tracking-wider mb-4">Artist Profiles</h2>
         <div className="flex flex-col gap-4">
@@ -90,7 +96,7 @@ export function ShareView({ event, positions, artists, printMode = false }: Prop
         </div>
       </section>
 
-      {/* Master input list — constrained width */}
+      {/* Master input list — spans all stages */}
       <section className="max-w-6xl mx-auto w-full px-6">
         <h2 className="text-xs text-muted uppercase tracking-wider mb-4">
           Master Input / Channel List

@@ -3,7 +3,7 @@ import { getEvent } from "@/lib/actions/events";
 import { ShareView } from "@/components/share/ShareView";
 import { DownloadButton } from "@/components/share/DownloadButton";
 import { PrintButton } from "@/components/share/PrintButton";
-import type { Event, Position, Artist } from "@/types/models";
+import type { Stage, Position, Artist } from "@/types/models";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -17,11 +17,15 @@ export default async function SharePage({ params, searchParams }: Props) {
   const event = await getEvent(id);
   if (!event) notFound();
 
-  const serializedEvent: Event = {
+  const serializedEvent = {
     ...event,
     date: event.date.toISOString(),
     createdAt: event.createdAt.toISOString(),
     updatedAt: event.updatedAt.toISOString(),
+    stages: undefined,
+    positions: undefined,
+    artists: undefined,
+    user: undefined,
   };
 
   return (
@@ -47,6 +51,7 @@ export default async function SharePage({ params, searchParams }: Props) {
 
       <ShareView
         event={serializedEvent}
+        stages={event.stages as Stage[]}
         positions={event.positions as Position[]}
         artists={event.artists as Artist[]}
         printMode={printMode}
