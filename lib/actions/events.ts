@@ -9,8 +9,17 @@ export async function getEvents() {
   const userId = await getOrCreateUserId();
   return prisma.event.findMany({
     where: { createdBy: userId },
-    orderBy: { date: "desc" },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
   });
+}
+
+export async function reorderEvents(orderedIds: string[]) {
+  await prisma.$transaction(
+    orderedIds.map((id, i) =>
+      prisma.event.update({ where: { id }, data: { sortOrder: i * 10 } })
+    )
+  );
+  revalidatePath("/");
 }
 
 export async function getEvent(id: string) {
@@ -80,6 +89,19 @@ export async function duplicateEvent(id: string) {
   if (!source) throw new Error("Event not found");
 
   return prisma.$transaction(async (tx) => {
+    // Normalize existing events and find insertion point for the clone
+    const allEvents = await tx.event.findMany({
+      where: { createdBy: userId },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+      select: { id: true },
+    });
+    const sourceIndex = allEvents.findIndex((e) => e.id === id);
+    await Promise.all(
+      allEvents.map((e, i) =>
+        tx.event.update({ where: { id: e.id }, data: { sortOrder: i * 10 } })
+      )
+    );
+
     const copy = await tx.event.create({
       data: {
         name: `${source.name} (copy)`,
@@ -89,6 +111,7 @@ export async function duplicateEvent(id: string) {
         stageDepth: source.stageDepth,
         fohPosition: source.fohPosition,
         createdBy: userId,
+        sortOrder: sourceIndex * 10 + 5, // slots between source and next
       },
     });
 

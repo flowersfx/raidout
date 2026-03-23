@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useId, useState, useCallback, useRef } from "react";
+import React, { useId, useState, useCallback, useRef, useEffect } from "react";
 import {
   DndContext,
   closestCenter,
@@ -106,6 +106,15 @@ export function SetupTab() {
 
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const addMenuRef = useRef<HTMLDivElement>(null);
+
+  const [showAddHint, setShowAddHint] = useState(false);
+  useEffect(() => {
+    if (positions.length === 0) {
+      setShowAddHint(true);
+      const t = setTimeout(() => setShowAddHint(false), 6000);
+      return () => clearTimeout(t);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!event) return null;
 
@@ -255,7 +264,7 @@ export function SetupTab() {
           <div className="flex items-center justify-between">
             <h2 className="text-xs text-muted uppercase tracking-wider">Positions</h2>
             <div ref={addMenuRef} className="relative">
-              <Button size="sm" variant="outline" onClick={() => setAddMenuOpen((o) => !o)}>
+              <Button size="sm" variant="outline" onClick={() => setAddMenuOpen((o) => !o)} className={showAddHint ? "hint-pulse" : undefined}>
                 + Add ▾
               </Button>
               {addMenuOpen && (
@@ -280,7 +289,10 @@ export function SetupTab() {
             </div>
           </div>
           {positions.length === 0 && (
-            <p className="text-xs text-dim py-2">No positions yet.</p>
+            <div className="border border-border rounded-lg px-4 py-6 text-center">
+              <p className="text-sm text-muted">No positions yet.</p>
+              <p className="text-xs text-dim mt-1">Add a rectangular or round position to start building your stage layout.</p>
+            </div>
           )}
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={positions.map((p) => p.id)} strategy={verticalListSortingStrategy}>

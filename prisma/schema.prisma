@@ -28,6 +28,7 @@ model Event {
   user       User       @relation(fields: [createdBy], references: [id])
   positions  Position[]
   artists    Artist[]
+  sortOrder  Int        @default(0)
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 }

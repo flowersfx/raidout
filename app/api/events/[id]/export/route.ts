@@ -52,7 +52,7 @@ export async function GET(
     })),
   };
 
-  const slug = event.name.replace(/[^a-z0-9]/gi, "-").toLowerCase();
+  const slug = event.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const dateStr = new Date(event.date).toISOString().slice(0, 10);
 
   return new Response(JSON.stringify(exportData, null, 2), {
