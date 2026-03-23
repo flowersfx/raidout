@@ -16,7 +16,7 @@ export function PositionForm({ position, dragHandle }: Props) {
   const { patchPosition, removePosition, clonePosition, selectedPositionIds, setSelectedPosition } = useEventStore();
   const uid = useId();
   const isSelected = selectedPositionIds.has(position.id);
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
   const [colorOpen, setColorOpen] = useState(false);
   const colorRef = useRef<HTMLDivElement>(null);
 
@@ -169,6 +169,15 @@ export function PositionForm({ position, dragHandle }: Props) {
               min={20}
             />
           </div>
+          <label className="flex items-center gap-1.5 text-xs text-muted cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={position.showSize ?? true}
+              onChange={(e) => patch({ showSize: e.target.checked })}
+              className="accent-accent"
+            />
+            Show size on stage
+          </label>
         </>
       )}
     </div>

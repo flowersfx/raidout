@@ -31,6 +31,7 @@ export interface Position {
   color: string;
   rotation: number;
   sortOrder: number;
+  showSize: boolean;
 }
 
 export interface TimeSlot {

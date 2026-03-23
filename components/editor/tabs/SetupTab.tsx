@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useId } from "react";
+import React, { useId, useState, useCallback, useRef } from "react";
 import {
   DndContext,
   closestCenter,
@@ -67,6 +67,30 @@ function generateId() {
 
 export function SetupTab() {
   const uid = useId();
+  const [leftWidth, setLeftWidth] = useState(288); // 288px = w-72
+  const isDragging = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const onDividerMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+
+    function onMouseMove(ev: MouseEvent) {
+      if (!isDragging.current || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const newWidth = Math.min(Math.max(ev.clientX - rect.left, 180), rect.width - 200);
+      setLeftWidth(newWidth);
+    }
+
+    function onMouseUp() {
+      isDragging.current = false;
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    }
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  }, []);
   const { event, positions, patchEvent, addPosition, reorderPositions, lastDeletedPositions, undoRemovePosition, snapEnabled, snapSize, setSnapEnabled, setSnapSize } = useEventStore();
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -95,13 +119,14 @@ export function SetupTab() {
       color: POSITION_COLORS[colorIndex],
       rotation: 0,
       sortOrder: positions.length,
+      showSize: true,
     });
   }
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div ref={containerRef} className="flex h-full overflow-hidden">
       {/* Left panel: form fields */}
-      <div className="w-72 flex-shrink-0 border-r border-border overflow-y-auto p-4 flex flex-col gap-5">
+      <div style={{ width: leftWidth }} className="flex-shrink-0 overflow-y-auto p-4 flex flex-col gap-5">
         {/* Event meta */}
         <section>
           <h2 className="text-xs text-muted uppercase tracking-wider mb-3">Event</h2>
@@ -217,6 +242,12 @@ export function SetupTab() {
           </DndContext>
         </section>
       </div>
+
+      {/* Resizable divider */}
+      <div
+        onMouseDown={onDividerMouseDown}
+        className="w-1 flex-shrink-0 cursor-col-resize bg-border hover:bg-accent transition-colors"
+      />
 
       {/* Right panel: live stage preview */}
       <div className="flex-1 flex flex-col p-4 gap-2 overflow-hidden">

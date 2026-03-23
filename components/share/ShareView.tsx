@@ -26,7 +26,7 @@ export function ShareView({ event, positions, artists }: Props) {
     <div className="py-8 flex flex-col gap-10">
 
       {/* Event header — constrained width */}
-      <header className="max-w-4xl mx-auto w-full px-6 border-b border-border pb-6">
+      <header className="max-w-6xl mx-auto w-full px-6 border-b border-border pb-6">
         <h1 className="text-2xl font-bold text-text">{event.name}</h1>
         <p className="text-muted mt-1">
           {new Date(event.date).toLocaleDateString("en-GB", {
@@ -43,8 +43,8 @@ export function ShareView({ event, positions, artists }: Props) {
         </p>
       </header>
 
-      {/* Stage plot — full width so it breathes on large screens */}
-      <section className="px-6">
+      {/* Stage plot — constrained width */}
+      <section className="max-w-6xl mx-auto w-full px-6">
         <h2 className="text-xs text-muted uppercase tracking-wider mb-3">Stage Plot</h2>
         <div
           className="border border-border rounded-lg overflow-hidden bg-[#111] w-full"
@@ -62,12 +62,12 @@ export function ShareView({ event, positions, artists }: Props) {
       </section>
 
       {/* Running order — constrained width */}
-      <section className="max-w-4xl mx-auto w-full px-6">
+      <section className="max-w-6xl mx-auto w-full px-6">
         <RunningOrderGrid artists={sorted} positions={positions} />
       </section>
 
       {/* FOH artist cards — constrained width */}
-      <section className="max-w-4xl mx-auto w-full px-6">
+      <section className="max-w-6xl mx-auto w-full px-6">
         <h2 className="text-xs text-muted uppercase tracking-wider mb-4">Artist Profiles</h2>
         <div className="flex flex-col gap-4">
           {sorted.map((artist) => (
@@ -81,7 +81,7 @@ export function ShareView({ event, positions, artists }: Props) {
       </section>
 
       {/* Master input list — constrained width */}
-      <section className="max-w-4xl mx-auto w-full px-6">
+      <section className="max-w-6xl mx-auto w-full px-6">
         <h2 className="text-xs text-muted uppercase tracking-wider mb-4">
           Master Input / Channel List
         </h2>

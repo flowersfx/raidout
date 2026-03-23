@@ -373,17 +373,19 @@ export function StageSVG({
               />
             )}
             {/* Dimensions label above the rect */}
-            <text
-              x={pos.x + pos.width / 2}
-              y={pos.y - DIM_ABOVE}
-              textAnchor="middle"
-              fontSize={DIM_SIZE}
-              fill={pos.color}
-              opacity={0.5}
-              style={{ pointerEvents: "none", userSelect: "none" }}
-            >
-              {pos.width}x{pos.height}cm
-            </text>
+            {(pos.showSize ?? true) && (
+              <text
+                x={pos.x + pos.width / 2}
+                y={pos.y - DIM_ABOVE}
+                textAnchor="middle"
+                fontSize={DIM_SIZE}
+                fill={pos.color}
+                opacity={0.5}
+                style={{ pointerEvents: "none", userSelect: "none" }}
+              >
+                {pos.width}x{pos.height}cm
+              </text>
+            )}
             {/* Clipped text content */}
             <g clipPath={`url(#clip-${pos.id})`}>
               {/* Position name */}
