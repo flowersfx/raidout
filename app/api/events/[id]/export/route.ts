@@ -15,17 +15,24 @@ export async function GET(
   }
 
   const exportData = {
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     event: {
       name: event.name,
       date: event.date,
       venue: event.venue,
-      stageWidth: event.stageWidth,
-      stageDepth: event.stageDepth,
     },
+    stages: event.stages.map((s) => ({
+      _ref: s.id,
+      name: s.name,
+      stageWidth: s.stageWidth,
+      stageDepth: s.stageDepth,
+      fohPosition: s.fohPosition,
+      sortOrder: s.sortOrder,
+    })),
     positions: event.positions.map((p) => ({
       _ref: p.id,
+      stageRef: p.stageId,
       name: p.name,
       x: p.x,
       y: p.y,

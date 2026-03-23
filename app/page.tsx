@@ -118,7 +118,9 @@ export default async function Dashboard() {
             name: e.name,
             date: e.date.toISOString(),
             venue: e.venue,
-            stageName: e.stageName ?? "Stage",
+            stageName: e.stages.length > 1
+            ? `${e.stages[0]?.name ?? "Stage"} +${e.stages.length - 1}`
+            : (e.stages[0]?.name ?? "Stage"),
           }))}
         />
       )}

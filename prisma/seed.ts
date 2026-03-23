@@ -13,22 +13,33 @@ async function main() {
     },
   });
 
-  // Sample event
+  // Sample event with a default stage
   const event = await prisma.event.create({
     data: {
       name: "Syntax Error: STACK OVERFLOW",
       date: new Date("2026-04-12T20:00:00"),
       venue: "Fabric, London",
-      stageWidth: 800,
-      stageDepth: 400,
       createdBy: user.id,
+      stages: {
+        create: {
+          name: "Stage",
+          stageWidth: 800,
+          stageDepth: 400,
+          fohPosition: "bottom",
+          sortOrder: 0,
+        },
+      },
     },
+    include: { stages: true },
   });
+
+  const stage = event.stages[0];
 
   // Positions
   const boothA = await prisma.position.create({
     data: {
       eventId: event.id,
+      stageId: stage.id,
       name: "DJ Booth A",
       x: 80,
       y: 120,
@@ -41,6 +52,7 @@ async function main() {
   const liveB = await prisma.position.create({
     data: {
       eventId: event.id,
+      stageId: stage.id,
       name: "Live Act B",
       x: 400,
       y: 100,

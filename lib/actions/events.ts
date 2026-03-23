@@ -10,6 +10,9 @@ export async function getEvents() {
   return prisma.event.findMany({
     where: { createdBy: userId },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+    include: {
+      stages: { select: { name: true }, orderBy: { sortOrder: "asc" } },
+    },
   });
 }
 
