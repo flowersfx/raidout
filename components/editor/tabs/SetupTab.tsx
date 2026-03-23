@@ -163,49 +163,91 @@ export function SetupTab() {
         <section>
           <h2 className="text-xs text-muted uppercase tracking-wider mb-3">Stage</h2>
           <div className="grid grid-cols-2 gap-2">
-            <Input
-              id={`${uid}-sw`}
-              label="Width (cm)"
-              type="number"
-              min={200}
-              max={2000}
-              value={event.stageWidth}
-              onChange={(e) => patchEvent({ stageWidth: Number(e.target.value) })}
-            />
-            <Input
-              id={`${uid}-sd`}
-              label="Depth (cm)"
-              type="number"
-              min={100}
-              max={2000}
-              value={event.stageDepth}
-              onChange={(e) => patchEvent({ stageDepth: Number(e.target.value) })}
-            />
-          </div>
-          <div className="flex items-center gap-2 mt-2">
-            <label className="flex items-center gap-1.5 text-xs text-muted cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={snapEnabled}
-                onChange={(e) => setSnapEnabled(e.target.checked)}
-                className="accent-accent"
-              />
-              Snap
-            </label>
-            {snapEnabled && (
+            <div className="flex items-end gap-1.5">
               <Input
-                id={`${uid}-snap`}
-                label="cm"
-                inline
+                id={`${uid}-sw`}
+                label="Width"
                 type="number"
-                min={1}
-                max={100}
-                value={snapSize}
-                onChange={(e) => setSnapSize(Math.max(1, Number(e.target.value)))}
-                className="w-16 text-xs"
+                min={200}
+                max={2000}
+                value={event.stageWidth}
+                onChange={(e) => patchEvent({ stageWidth: Number(e.target.value) })}
               />
-            )}
+              <span className="text-xs text-muted uppercase tracking-wider pb-2">cm</span>
+            </div>
+            <div className="flex items-end gap-1.5">
+              <Input
+                id={`${uid}-sd`}
+                label="Depth"
+                type="number"
+                min={100}
+                max={2000}
+                value={event.stageDepth}
+                onChange={(e) => patchEvent({ stageDepth: Number(e.target.value) })}
+              />
+              <span className="text-xs text-muted uppercase tracking-wider pb-2">cm</span>
+            </div>
           </div>
+          {/* FOH compass (left) + Snap (right) share one row */}
+          <div className="flex items-start justify-between gap-2 mt-2">
+            {/* FOH position */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-xs text-muted">FOH</span>
+              <div className="grid grid-cols-3 gap-0.5" style={{ width: 54 }}>
+              {[
+                [null,     "top",    null   ],
+                ["left",   null,     "right"],
+                [null,     "bottom", null   ],
+              ].map((row, ri) =>
+                row.map((pos, ci) => {
+                  if (!pos) return <div key={`${ri}-${ci}`} />;
+                  const icons: Record<string, string> = { top: "↓", left: "→", right: "←", bottom: "↑" };
+                  const active = (event.fohPosition ?? "bottom") === pos;
+                  return (
+                    <button
+                      key={pos}
+                      title={pos.charAt(0).toUpperCase() + pos.slice(1)}
+                      onClick={() => patchEvent({ fohPosition: pos })}
+                      className={`w-full aspect-square text-xs rounded transition-colors flex items-center justify-center ${
+                        active
+                          ? "bg-accent/20 text-accent border border-accent"
+                          : "text-muted hover:bg-hover border border-border"
+                      }`}
+                    >
+                      {icons[pos]}
+                    </button>
+                  );
+                })
+              )}
+              </div>
+            </div>{/* end FOH wrapper */}
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              <label className="flex items-center gap-1.5 text-xs text-muted cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={snapEnabled}
+                  onChange={(e) => setSnapEnabled(e.target.checked)}
+                  className="accent-accent"
+                />
+                Snap
+              </label>
+              {snapEnabled && (
+                <>
+                  <Input
+                    id={`${uid}-snap`}
+                    inline
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={snapSize}
+                    onChange={(e) => setSnapSize(Math.max(1, Number(e.target.value)))}
+                    className="w-16 text-xs"
+                  />
+                  <span className="text-xs text-muted uppercase tracking-wider">cm</span>
+                </>
+              )}
+            </div>
+          </div>{/* end FOH+snap row */}
         </section>
 
         {/* Positions */}

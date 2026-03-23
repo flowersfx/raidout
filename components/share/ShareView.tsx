@@ -20,7 +20,11 @@ export function ShareView({ event, positions, artists }: Props) {
     sortableStartTime(a.startTime, allStartTimes) - sortableStartTime(b.startTime, allStartTimes)
   );
 
-  const stageAspect = event.stageWidth / (event.stageDepth + FOH_LABEL_HEIGHT);
+  const fohPos = event.fohPosition ?? "bottom";
+  const isVerticalFoh = fohPos === "left" || fohPos === "right";
+  const stageAspect = isVerticalFoh
+    ? (event.stageWidth + FOH_LABEL_HEIGHT) / event.stageDepth
+    : event.stageWidth / (event.stageDepth + FOH_LABEL_HEIGHT);
 
   return (
     <div className="py-8 flex flex-col gap-10">
@@ -56,6 +60,7 @@ export function ShareView({ event, positions, artists }: Props) {
             externalArtists={artists}
             stageWidth={event.stageWidth}
             stageDepth={event.stageDepth}
+            fohPosition={fohPos}
             annotateGear
           />
         </div>

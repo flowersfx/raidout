@@ -95,6 +95,7 @@ export async function saveEventSnapshot(snapshot: {
         venue: event.venue,
         stageWidth: event.stageWidth,
         stageDepth: event.stageDepth,
+        fohPosition: event.fohPosition ?? "bottom",
       },
     });
 

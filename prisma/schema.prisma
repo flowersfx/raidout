@@ -22,8 +22,9 @@ model Event {
   venue      String
   stageWidth Int        @default(800)
   stageDepth Int        @default(400)
-  shareToken String     @unique @default(cuid())
-  createdBy  String
+  shareToken   String     @unique @default(cuid())
+  fohPosition  String     @default("bottom")
+  createdBy    String
   user       User       @relation(fields: [createdBy], references: [id])
   positions  Position[]
   artists    Artist[]

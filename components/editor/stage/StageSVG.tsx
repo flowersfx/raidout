@@ -13,6 +13,7 @@ interface Props {
   externalArtists?: Artist[];
   stageWidth?: number;
   stageDepth?: number;
+  fohPosition?: string;
   annotateGear?: boolean; // show first gear line near each position
 }
 
@@ -72,6 +73,7 @@ export function StageSVG({
   externalArtists,
   stageWidth: extWidth,
   stageDepth: extDepth,
+  fohPosition: extFohPosition,
   annotateGear = false,
 }: Props) {
   const store = useEventStore();
@@ -83,6 +85,13 @@ export function StageSVG({
   const artists = externalArtists ?? store.artists;
   const stageWidth = extWidth ?? store.event?.stageWidth ?? 800;
   const stageDepth = extDepth ?? store.event?.stageDepth ?? 400;
+  const fohPosition = extFohPosition ?? store.event?.fohPosition ?? "bottom";
+
+  // Compute stage offset and total SVG dimensions based on FOH strip position
+  const stageOffsetX = fohPosition === "left" ? FOH_LABEL_HEIGHT : 0;
+  const stageOffsetY = fohPosition === "top"  ? FOH_LABEL_HEIGHT : 0;
+  const totalWidth   = (fohPosition === "left" || fohPosition === "right") ? stageWidth + FOH_LABEL_HEIGHT : stageWidth;
+  const totalHeight  = (fohPosition === "top"  || fohPosition === "bottom") ? stageDepth + FOH_LABEL_HEIGHT : stageDepth;
 
   // Selection rectangle state
   const [selRect, setSelRect] = useState<SelectionRect | null>(null);
@@ -144,12 +153,13 @@ export function StageSVG({
       }
       if (selRectRef.current) {
         if (isMarqueeRef.current) {
-          // Compute which positions intersect the rectangle
+          // Compute which positions intersect the rectangle.
+          // getSVGPoint returns root SVG coords; positions are in stage coords — subtract offset.
           const r = selRectRef.current;
-          const minX = Math.min(r.x1, r.x2);
-          const maxX = Math.max(r.x1, r.x2);
-          const minY = Math.min(r.y1, r.y2);
-          const maxY = Math.max(r.y1, r.y2);
+          const minX = Math.min(r.x1, r.x2) - stageOffsetX;
+          const maxX = Math.max(r.x1, r.x2) - stageOffsetX;
+          const minY = Math.min(r.y1, r.y2) - stageOffsetY;
+          const maxY = Math.max(r.y1, r.y2) - stageOffsetY;
 
           const hit = positions.filter((pos) => {
             const cx = pos.x + pos.width / 2;
@@ -191,8 +201,6 @@ export function StageSVG({
     };
   }, [mode, onDragMouseMove, onDragMouseUp, onHandleMouseMove, onHandleMouseUp, getSVGPoint, positions, store, resizeRef, rotateRef]);
 
-  const totalHeight = stageDepth + FOH_LABEL_HEIGHT;
-
   // Selection rectangle display coords
   const selDisplay = selRect ? {
     x: Math.min(selRect.x1, selRect.x2),
@@ -204,10 +212,13 @@ export function StageSVG({
   return (
     <svg
       ref={svgRef}
-      viewBox={`0 0 ${stageWidth} ${totalHeight}`}
+      viewBox={`0 0 ${totalWidth} ${totalHeight}`}
       className="w-full h-full"
       style={{ fontFamily: "var(--font-mono, monospace)" }}
     >
+      {/* Stage content — offset so the FOH strip fits on any side */}
+      <g transform={stageOffsetX || stageOffsetY ? `translate(${stageOffsetX}, ${stageOffsetY})` : undefined}>
+
       {/* Stage background */}
       <rect
         x={0} y={0} width={stageWidth} height={stageDepth}
@@ -559,6 +570,8 @@ export function StageSVG({
         );
       })()}
 
+      </g>{/* end stage content group */}
+
       {/* Selection rectangle */}
       {selDisplay && selDisplay.width > 0 && selDisplay.height > 0 && (
         <rect
@@ -574,26 +587,55 @@ export function StageSVG({
         />
       )}
 
-      {/* FOH label */}
-      <rect
-        x={0}
-        y={stageDepth}
-        width={stageWidth}
-        height={FOH_LABEL_HEIGHT}
-        fill="#0a0a0a"
-      />
-      <text
-        x={stageWidth / 2}
-        y={stageDepth + 16}
-        textAnchor="middle"
-        fontSize={9}
-        fontWeight="600"
-        fill="#555"
-        letterSpacing={3}
-        style={{ userSelect: "none" }}
-      >
-        FRONT OF HOUSE
-      </text>
+      {/* FOH label strip */}
+      {(() => {
+        const FOH_TEXT = "FRONT OF HOUSE";
+        const isVertical = fohPosition === "left" || fohPosition === "right";
+        const stripX = fohPosition === "right" ? stageOffsetX + stageWidth : 0;
+        const stripY = fohPosition === "bottom" ? stageOffsetY + stageDepth : 0;
+        const stripW = isVertical ? FOH_LABEL_HEIGHT : stageWidth;
+        const stripH = isVertical ? stageDepth : FOH_LABEL_HEIGHT;
+
+        const LETTER_SPACING = 12;
+        const totalLetterHeight = FOH_TEXT.length * LETTER_SPACING;
+        const letterStartY = (stageDepth - totalLetterHeight) / 2 + LETTER_SPACING;
+        const stripCX = stripX + FOH_LABEL_HEIGHT / 2;
+
+        return (
+          <>
+            <rect x={stripX} y={stripY} width={stripW} height={stripH} fill="#0a0a0a" />
+            {isVertical ? (
+              FOH_TEXT.split("").map((ch, i) => (
+                <text
+                  key={i}
+                  x={stripCX}
+                  y={stageOffsetY + letterStartY + i * LETTER_SPACING}
+                  textAnchor="middle"
+                  fontSize={9}
+                  fontWeight="600"
+                  fill="#555"
+                  style={{ userSelect: "none" }}
+                >
+                  {ch}
+                </text>
+              ))
+            ) : (
+              <text
+                x={stageOffsetX + stageWidth / 2}
+                y={stripY + 16}
+                textAnchor="middle"
+                fontSize={9}
+                fontWeight="600"
+                fill="#555"
+                letterSpacing={3}
+                style={{ userSelect: "none" }}
+              >
+                {FOH_TEXT}
+              </text>
+            )}
+          </>
+        );
+      })()}
     </svg>
   );
 }
