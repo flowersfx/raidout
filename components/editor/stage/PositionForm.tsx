@@ -3,7 +3,7 @@
 import React, { useId, useState, useRef, useEffect } from "react";
 import { useEventStore } from "@/store/eventStore";
 import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
+
 import { POSITION_COLORS } from "@/types/models";
 import type { Position } from "@/types/models";
 
@@ -91,36 +91,15 @@ export function PositionForm({ position, dragHandle }: Props) {
               onChange={(e) => patch({ name: e.target.value })}
               placeholder="Position name"
             />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => patch({ collapsed: !collapsed })}
-              title={collapsed ? "Expand" : "Collapse"}
-            >
-              <svg
-                width="10" height="10" viewBox="0 0 10 10"
-                fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-                style={{ transition: "transform 0.15s", transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)" }}
-              >
-                <polyline points="2,3 5,7 8,3" />
-              </svg>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => clonePosition(position.id)}
-              title="Clone position"
-            >
-              ⧉
-            </Button>
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => removePosition(position.id)}
-              title="Remove position"
-            >
-              ✕
-            </Button>
+            <div className="flex items-center shrink-0 gap-0.5">
+              <button type="button" onClick={() => patch({ collapsed: !collapsed })} title={collapsed ? "Expand" : "Collapse"} className="px-1 py-1 text-muted hover:text-text transition-colors cursor-pointer">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "transform 0.15s", transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)" }}>
+                  <polyline points="2,3 5,7 8,3" />
+                </svg>
+              </button>
+              <button type="button" onClick={() => clonePosition(position.id)} title="Clone position" className="px-1 py-1 text-xs text-muted hover:text-text transition-colors cursor-pointer">⧉</button>
+              <button type="button" onClick={() => removePosition(position.id)} title="Remove position" className="px-1 py-1 text-xs text-danger hover:bg-raised rounded transition-colors cursor-pointer">✕</button>
+            </div>
           </>
         )}
       </div>

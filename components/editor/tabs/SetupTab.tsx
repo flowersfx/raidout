@@ -321,7 +321,7 @@ export function SetupTab() {
       {/* Right panel: live stage preview */}
       <div className="flex-1 flex flex-col p-4 gap-2 overflow-hidden">
         <p className="text-xs text-muted uppercase tracking-wider flex-shrink-0">
-          Stage Preview — drag positions to reposition
+          Stage Preview
         </p>
         <div className="flex-1 min-h-0 flex items-center justify-center">
           <div className="w-full h-full max-h-full">
