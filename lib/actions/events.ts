@@ -109,6 +109,7 @@ export async function duplicateEvent(id: string) {
         venue: source.venue,
         stageWidth: source.stageWidth,
         stageDepth: source.stageDepth,
+        stageName: source.stageName,
         fohPosition: source.fohPosition,
         createdBy: userId,
         sortOrder: sourceIndex * 10 + 5, // slots between source and next
@@ -184,6 +185,7 @@ export async function saveEventSnapshot(snapshot: {
         venue: event.venue,
         stageWidth: event.stageWidth,
         stageDepth: event.stageDepth,
+        stageName: event.stageName ?? "Stage",
         fohPosition: event.fohPosition ?? "bottom",
       },
     });

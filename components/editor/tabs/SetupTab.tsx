@@ -165,7 +165,14 @@ export function SetupTab() {
         {/* Stage dimensions */}
         <section>
           <h2 className="text-xs text-muted uppercase tracking-wider mb-3">Stage</h2>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col gap-3">
+            <Input
+              id={`${uid}-sn`}
+              label="Name"
+              value={event.stageName ?? "Stage"}
+              onChange={(e) => patchEvent({ stageName: e.target.value })}
+            />
+            <div className="grid grid-cols-2 gap-2">
             <div className="flex items-end gap-1.5">
               <Input
                 id={`${uid}-sw`}
@@ -254,6 +261,7 @@ export function SetupTab() {
               )}
             </div>
           </div>{/* end FOH+snap row */}
+          </div>{/* end flex-col gap-3 */}
         </section>
 
         {/* Positions */}
@@ -330,7 +338,7 @@ export function SetupTab() {
       {/* Right panel: live stage preview */}
       <div className="flex-1 flex flex-col p-4 gap-2 overflow-hidden">
         <p className="text-xs text-muted uppercase tracking-wider flex-shrink-0">
-          Stage Preview
+          {event?.stageName ?? "Stage"} Preview
         </p>
         <div className="flex-1 min-h-0 flex items-center justify-center">
           <div className="w-full h-full max-h-full">

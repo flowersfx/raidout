@@ -10,7 +10,7 @@ export function StagePlotTab() {
     <div className="flex flex-col h-full p-6 gap-4">
       <div className="flex items-center justify-between flex-shrink-0">
         <div>
-          <h2 className="text-sm font-semibold text-text">Stage Plot</h2>
+          <h2 className="text-sm font-semibold text-text">{event?.stageName ?? "Stage"} Plot</h2>
           {event && (
             <p className="text-xs text-muted mt-0.5">
               {event.stageWidth} × {event.stageDepth} cm

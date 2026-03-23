@@ -22,6 +22,7 @@ interface EventData {
   name: string;
   date: string;
   venue: string;
+  stageName: string;
 }
 
 interface PendingClone {
@@ -110,6 +111,7 @@ export function EventList({ events: initialEvents }: { events: EventData[] }) {
         name={event.name}
         date={event.date}
         venue={event.venue}
+        stageName={event.stageName}
         onDuplicateStart={() => startPendingClone(event.id, event.name)}
       />
     );

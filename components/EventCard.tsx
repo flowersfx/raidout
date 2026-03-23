@@ -11,10 +11,11 @@ interface Props {
   name: string;
   date: string; // ISO string
   venue: string;
+  stageName: string;
   onDuplicateStart: () => void;
 }
 
-export function EventCard({ id, name, date, venue, onDuplicateStart }: Props) {
+export function EventCard({ id, name, date, venue, stageName, onDuplicateStart }: Props) {
   const router = useRouter();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id });
@@ -134,7 +135,7 @@ export function EventCard({ id, name, date, venue, onDuplicateStart }: Props) {
                     {name}
                   </p>
                   <p className="text-xs text-muted mt-0.5">
-                    {formattedDate} &bull; {venue}
+                    {formattedDate} &bull; {venue} &bull; {stageName}
                   </p>
                 </div>
                 <span className="text-dim text-xs mono">{isNavigating ? "…" : "→"}</span>

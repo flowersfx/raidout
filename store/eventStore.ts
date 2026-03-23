@@ -11,6 +11,11 @@ interface DeletedPosition {
   index: number;
 }
 
+interface DeletedArtist {
+  artist: Artist;
+  index: number;
+}
+
 interface EventStore {
   // Data
   event: Event | null;
@@ -19,6 +24,7 @@ interface EventStore {
 
   // Undo state (batch — supports single or multi-delete)
   lastDeletedPositions: DeletedPosition[];
+  lastDeletedArtist: DeletedArtist | null;
 
   // UI state
   activeTab: Tab;
@@ -50,6 +56,7 @@ interface EventStore {
   addArtist(a: Artist): void;
   patchArtist(id: string, fields: Partial<Artist>): void;
   removeArtist(id: string): void;
+  undoRemoveArtist(): void;
   reorderArtists(ids: string[]): void;
 
   // UI actions
@@ -71,6 +78,7 @@ export const useEventStore = create<EventStore>((set) => ({
   positions: [],
   artists: [],
   lastDeletedPositions: [],
+  lastDeletedArtist: null,
   activeTab: "setup",
   selectedPositionId: null,
   selectedPositionIds: new Set<string>(),
@@ -180,11 +188,25 @@ export const useEventStore = create<EventStore>((set) => ({
       dirty: true,
     })),
   removeArtist: (id) =>
-    set((s) => ({
-      artists: s.artists.filter((a) => a.id !== id),
-      expandedArtistId: s.expandedArtistId === id ? null : s.expandedArtistId,
-      dirty: true,
-    })),
+    set((s) => {
+      const index = s.artists.findIndex((a) => a.id === id);
+      const deleted = s.artists[index];
+      return {
+        artists: s.artists.filter((a) => a.id !== id),
+        expandedArtistId: s.expandedArtistId === id ? null : s.expandedArtistId,
+        lastDeletedArtist: deleted ? { artist: deleted, index } : s.lastDeletedArtist,
+        dirty: true,
+      };
+    }),
+  undoRemoveArtist: () =>
+    set((s) => {
+      if (!s.lastDeletedArtist) return s;
+      const { artist, index } = s.lastDeletedArtist;
+      const merged = [...s.artists];
+      merged.splice(Math.min(index, merged.length), 0, artist);
+      const artists = merged.map((a, i) => ({ ...a, sortOrder: i }));
+      return { artists, lastDeletedArtist: null, dirty: true };
+    }),
   reorderArtists: (ids) =>
     set((s) => ({
       artists: ids

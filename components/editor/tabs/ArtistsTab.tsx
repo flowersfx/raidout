@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {
   DndContext,
   closestCenter,
@@ -39,7 +40,7 @@ function SortableArtist({ artist }: { artist: Artist }) {
 }
 
 export function ArtistsTab() {
-  const { artists, event, addArtist, reorderArtists } = useEventStore();
+  const { artists, event, addArtist, reorderArtists, lastDeletedArtist, undoRemoveArtist } = useEventStore();
 
   const sorted = [...artists].sort((a, b) => a.sortOrder - b.sortOrder);
 
@@ -101,9 +102,23 @@ export function ArtistsTab() {
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={sorted.map((a) => a.id)} strategy={verticalListSortingStrategy}>
             <div className="flex flex-col gap-2">
-              {sorted.map((artist) => (
-                <SortableArtist key={artist.id} artist={artist} />
-              ))}
+              {(() => {
+                const items: React.ReactNode[] = sorted.map((artist) => (
+                  <SortableArtist key={artist.id} artist={artist} />
+                ));
+                if (lastDeletedArtist) {
+                  const toast = (
+                    <div key="undo-toast" className="flex items-center justify-between gap-2 px-3 py-2 bg-surface border border-border rounded-lg text-xs text-muted">
+                      <span>
+                        Deleted <strong className="text-text">{lastDeletedArtist.artist.name}</strong>
+                      </span>
+                      <Button size="sm" variant="outline" onClick={undoRemoveArtist}>Undo</Button>
+                    </div>
+                  );
+                  items.splice(Math.min(lastDeletedArtist.index, items.length), 0, toast);
+                }
+                return items;
+              })()}
             </div>
           </SortableContext>
         </DndContext>

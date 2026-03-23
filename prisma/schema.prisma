@@ -23,6 +23,7 @@ model Event {
   stageWidth Int        @default(800)
   stageDepth Int        @default(400)
   shareToken   String     @unique @default(cuid())
+  stageName    String     @default("Stage")
   fohPosition  String     @default("bottom")
   createdBy    String
   user       User       @relation(fields: [createdBy], references: [id])

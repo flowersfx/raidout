@@ -118,6 +118,7 @@ export default async function Dashboard() {
             name: e.name,
             date: e.date.toISOString(),
             venue: e.venue,
+            stageName: e.stageName ?? "Stage",
           }))}
         />
       )}

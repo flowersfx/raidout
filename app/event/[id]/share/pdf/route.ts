@@ -16,8 +16,8 @@ export async function GET(
     return NextResponse.json({ error: "Event not found" }, { status: 404 });
   }
 
-  // Build the URL to render
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+  // Build the URL to render — prefer explicit env var, fall back to request origin
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? new URL(_req.url).origin;
   const url = `${baseUrl}/event/${id}/share?print=1`;
 
   let browser;

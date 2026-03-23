@@ -52,7 +52,7 @@ export function ShareView({ event, positions, artists }: Props) {
 
       {/* Stage plot — constrained width */}
       <section className="max-w-6xl mx-auto w-full px-6">
-        <h2 className="text-xs text-muted uppercase tracking-wider mb-3">Stage Plot</h2>
+        <h2 className="text-xs text-muted uppercase tracking-wider mb-3">{event.stageName ?? "Stage"} Plot</h2>
         <div
           className="border border-border rounded-lg overflow-hidden bg-[#111] w-full"
           style={{ aspectRatio: stageAspect }}

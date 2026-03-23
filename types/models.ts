@@ -15,6 +15,7 @@ export interface Event {
   stageWidth: number;
   stageDepth: number;
   shareToken: string;
+  stageName: string;
   fohPosition: string;
   createdBy: string;
   createdAt: string;
