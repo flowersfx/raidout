@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getEvents } from "@/lib/actions/events";
 import { Button } from "@/components/ui/Button";
 import { ImportButton } from "@/components/ImportButton";
+import { EventList } from "@/components/EventList";
 
 const SUFFIXES = ["a","b","c","d","e","f","g","h"] as const;
 const DURS     = [0.70, 1.10, 0.85, 1.45, 0.95, 1.25, 0.75, 1.00];
@@ -111,44 +112,19 @@ export default async function Dashboard() {
           </Link>
         </div>
       ) : (
-        <ul className="flex flex-col gap-3">
-          {events.map((event) => (
-            <li key={event.id} className="flex items-center gap-2">
-              <Link
-                href={`/event/${event.id}`}
-                className="flex-1 flex items-center justify-between bg-surface border border-border rounded-lg px-5 py-4 hover:border-accent/40 hover:bg-raised transition-colors group"
-              >
-                <div>
-                  <p className="font-semibold text-text group-hover:text-accent transition-colors">
-                    {event.name}
-                  </p>
-                  <p className="text-xs text-muted mt-0.5">
-                    {new Date(event.date).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}{" "}
-                    &bull; {event.venue}
-                  </p>
-                </div>
-                <span className="text-dim text-xs mono">→</span>
-              </Link>
-              <a
-                href={`/api/events/${event.id}/export`}
-                download
-                title="Export event as JSON"
-                className="inline-flex items-center px-3 py-2 text-xs font-medium text-muted border border-border rounded-lg hover:text-text hover:bg-raised transition-colors"
-              >
-                ↓ Export
-              </a>
-            </li>
-          ))}
-        </ul>
+        <EventList
+          events={events.map((e) => ({
+            id: e.id,
+            name: e.name,
+            date: e.date.toISOString(),
+            venue: e.venue,
+          }))}
+        />
       )}
 
       <footer className="mt-auto pt-10 pb-8 flex justify-center">
         <a href="https://www.flowersfx.com" target="_blank" rel="noopener noreferrer">
-          <Image src="/ffx-logo.png" alt="FlowersFX" width={200} height={100} />
+          <Image src="/ffx-logo.png" alt="FlowersFX" width={200} height={100} priority className="opacity-50" />
         </a>
       </footer>
     </main>

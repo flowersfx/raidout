@@ -1,0 +1,125 @@
+{
+  "version": 1,
+  "exportedAt": "2026-03-23T11:02:06.818Z",
+  "event": {
+    "name": "DEEP FIELD — STAGE B",
+    "date": "2026-05-16T00:00:00.000Z",
+    "venue": "Printworks, London",
+    "stageWidth": 800,
+    "stageDepth": 600
+  },
+  "positions": [
+    {
+      "_ref": "cmn32q4sh0006dvw0lm10t4ag",
+      "name": "Warm-Up Booth",
+      "x": 40,
+      "y": 330,
+      "width": 180,
+      "height": 100,
+      "color": "#69f0ae",
+      "rotation": 0
+    },
+    {
+      "_ref": "cmn32q4zg0008dvw0rifuooys",
+      "name": "Live Act Stage",
+      "x": 170,
+      "y": 30,
+      "width": 400,
+      "height": 240,
+      "color": "#ce93d8",
+      "rotation": 0
+    },
+    {
+      "_ref": "cmn32q523000advw0txidnsdx",
+      "name": "Main DJ Booth",
+      "x": 530,
+      "y": 320,
+      "width": 220,
+      "height": 130,
+      "color": "#00e5ff",
+      "rotation": 15
+    }
+  ],
+  "artists": [
+    {
+      "name": "BURIAL STATIC",
+      "positionRef": "cmn32q4sh0006dvw0lm10t4ag",
+      "startTime": "20:00",
+      "endTime": "22:00",
+      "tableMin": "120×60cm",
+      "gearBrings": "Pioneer CDJ-3000 x2\nPioneer DJM-900NXS2\nSennheiser HD-25 headphones\nUSB drive x2 (backup)",
+      "venueNeeds": "DI box x2\nMonitor wedge on booth\nReading light\nPower strip",
+      "routing": "CH1 L: CDJ-A master L\nCH1 R: CDJ-A master R\nCH2 L: CDJ-B master L\nCH2 R: CDJ-B master R",
+      "notes": "",
+      "extraSlots": "[]",
+      "arrivalTime": "19:00",
+      "soundcheckStart": "19:30",
+      "soundcheckEnd": "20:00",
+      "sortOrder": 0
+    },
+    {
+      "name": "VØID ARCHITECT",
+      "positionRef": "cmn32q4zg0008dvw0rifuooys",
+      "startTime": "22:00",
+      "endTime": "23:30",
+      "tableMin": "180×80cm",
+      "gearBrings": "Elektron Octatrack MK2\nMoog Subsequent 37\nRoland TR-8S\nKorg Volca FM x2\nFocusrite Scarlett 18i8\nAbleton Push 3 (standalone)\nMacBook Pro 14\" (backup)\nSennheiser E935 (vocals)\nBoom stand x2\nPatch cables / power strip (personal)",
+      "venueNeeds": "Power strip x2 (16A)\nDI box x4\nXLR snake to FOH (8 lines min)\nMonitor wedge x2\nSpot lighting on rig\nTable riser if available",
+      "routing": "CH5 L: Octatrack main L\nCH5 R: Octatrack main R\nCH6 L: Moog Subsequent 37 L\nCH6 R: Moog Subsequent 37 R\nCH7: TR-8S kick\nCH8: TR-8S hats / perc\nCH9: Volca FM 1\nCH10: Volca FM 2\nCH11: Vocals (Sennheiser E935)\nCH12 L: Laptop backup L\nCH12 R: Laptop backup R",
+      "notes": "Needs 30 min changeover before set. No flash photography during performance — strictly enforced.",
+      "extraSlots": "[]",
+      "arrivalTime": "20:30",
+      "soundcheckStart": "21:00",
+      "soundcheckEnd": "21:45",
+      "sortOrder": 1
+    },
+    {
+      "name": "CASSETTE WRAITH",
+      "positionRef": "cmn32q523000advw0txidnsdx",
+      "startTime": "22:30",
+      "endTime": "00:00",
+      "tableMin": "120×60cm",
+      "gearBrings": "Pioneer CDJ-3000 x2\nPioneer DJM-V10\nShure SE846 IEMs\nLaptop (Rekordbox)\nUSB drives x3",
+      "venueNeeds": "DI box x2\nEthernet cable to booth\nUSB hub at booth\nMonitor wedge",
+      "routing": "CH3 L: DJM-V10 master L\nCH3 R: DJM-V10 master R",
+      "notes": "Prefers Ethernet over Wi-Fi for streaming backup. Booth monitor level — medium, no subs.",
+      "extraSlots": "[]",
+      "arrivalTime": "22:00",
+      "soundcheckStart": "22:10",
+      "soundcheckEnd": "22:25",
+      "sortOrder": 2
+    },
+    {
+      "name": "LYRA-7",
+      "positionRef": "cmn32q4zg0008dvw0rifuooys",
+      "startTime": "23:30",
+      "endTime": "01:30",
+      "tableMin": "160×60cm",
+      "gearBrings": "Eurorack modular (104hp 6U — road case)\nMake Noise 0-Coast\nKorg Minilogue XD\nStrymon BigSky reverb\nERM Multiclock\nFocusrite Scarlett 4i4\nCustom MIDI controller (USB powered)\nLaptop (VCV Rack backup)",
+      "venueNeeds": "Power strip x2 (surge protected — critical)\nDI box x4\nMonitor wedge x2 or side-fill\nTable 160×60cm minimum — no cloth, hard surface\nXLR snake 4 lines to FOH\nLiaise with lighting re: fog cue at 00:45",
+      "routing": "CH5 L: Modular stereo out L\nCH5 R: Modular stereo out R\nCH6: 0-Coast mono\nCH7 L: Minilogue XD L\nCH7 R: Minilogue XD R\nCH8: Click / trigger (monitor only, no FOH)",
+      "notes": "Modular rig requires minimum 30 min setup. Do not rush changeover from VØID ARCHITECT — coordinate with stage manager. Power must be on before artist arrives.",
+      "extraSlots": "[]",
+      "arrivalTime": "23:00",
+      "soundcheckStart": "23:00",
+      "soundcheckEnd": "23:30",
+      "sortOrder": 3
+    },
+    {
+      "name": "PHANTOM CIRCUIT",
+      "positionRef": "cmn32q523000advw0txidnsdx",
+      "startTime": "00:00",
+      "endTime": "02:00",
+      "tableMin": "140×60cm",
+      "gearBrings": "Pioneer CDJ-3000 x2\nTechnics SL-1210MK7 (vinyl)\nOrtofon Concorde DJ x2\nAllen & Heath Xone:96\nShure SRH1540 headphones\nRecord bag (approx 40 records)",
+      "venueNeeds": "DI box x2\nPhono preamp x2 (for Technics — essential)\nMonitor wedge\nUSB power at booth\nSlip mats x2 (provided by venue if possible)",
+      "routing": "CH3 L: Xone:96 master L\nCH3 R: Xone:96 master R\nCH4 L: Phono A (Technics 1) L\nCH4 R: Phono A (Technics 1) R",
+      "notes": "Vinyl-first set. Phono preamps are non-negotiable — confirm with FOH engineer before doors. Spare stylus in record bag.",
+      "extraSlots": "[]",
+      "arrivalTime": "23:30",
+      "soundcheckStart": "23:40",
+      "soundcheckEnd": "23:55",
+      "sortOrder": 4
+    }
+  ]
+}

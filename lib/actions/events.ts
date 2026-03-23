@@ -74,6 +74,71 @@ export async function deleteEvent(id: string) {
   revalidatePath("/");
 }
 
+export async function duplicateEvent(id: string) {
+  const userId = await getOrCreateUserId();
+  const source = await getEvent(id);
+  if (!source) throw new Error("Event not found");
+
+  return prisma.$transaction(async (tx) => {
+    const copy = await tx.event.create({
+      data: {
+        name: `${source.name} (copy)`,
+        date: source.date,
+        venue: source.venue,
+        stageWidth: source.stageWidth,
+        stageDepth: source.stageDepth,
+        fohPosition: source.fohPosition,
+        createdBy: userId,
+      },
+    });
+
+    const positionIdMap = new Map<string, string>();
+    for (const p of source.positions) {
+      const created = await tx.position.create({
+        data: {
+          eventId: copy.id,
+          name: p.name,
+          x: p.x,
+          y: p.y,
+          width: p.width,
+          height: p.height,
+          color: p.color,
+          rotation: p.rotation,
+          shape: p.shape,
+          showSize: p.showSize,
+          sortOrder: p.sortOrder,
+        },
+      });
+      positionIdMap.set(p.id, created.id);
+    }
+
+    for (const a of source.artists) {
+      await tx.artist.create({
+        data: {
+          eventId: copy.id,
+          positionId: a.positionId ? (positionIdMap.get(a.positionId) ?? null) : null,
+          name: a.name,
+          startTime: a.startTime,
+          endTime: a.endTime,
+          tableMin: a.tableMin,
+          gearBrings: a.gearBrings,
+          venueNeeds: a.venueNeeds,
+          routing: a.routing,
+          notes: a.notes,
+          extraSlots: a.extraSlots,
+          arrivalTime: a.arrivalTime,
+          soundcheckStart: a.soundcheckStart,
+          soundcheckEnd: a.soundcheckEnd,
+          sortOrder: a.sortOrder,
+        },
+      });
+    }
+
+    revalidatePath("/");
+    return copy.id;
+  });
+}
+
 /**
  * Full snapshot save — called by auto-save.
  * Overwrites all positions and artists for the event atomically.

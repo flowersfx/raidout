@@ -180,6 +180,16 @@ input[type="number"].show-spin::-webkit-outer-spin-button {
 .print-mode .foh-bar { display: none; }
 @media (prefers-reduced-motion: reduce) { .foh-bar { animation: none; } }
 
+/* ─── Hint pulse — draws attention to a button on first load ────────────────── */
+@keyframes hint-pulse {
+  0%, 100% { outline: 2px solid transparent; outline-offset: 2px; }
+  50%       { outline: 2px solid rgba(0, 229, 255, 0.7); outline-offset: 2px; }
+}
+.hint-pulse {
+  animation: hint-pulse 1.5s ease-in-out 4;
+}
+@media (prefers-reduced-motion: reduce) { .hint-pulse { animation: none; } }
+
 /* ─── Focus ──────────────────────────────────────────────────────────────────── */
 :focus-visible {
   outline: 2px solid var(--accent);
