@@ -67,7 +67,7 @@ function generateId() {
 
 export function SetupTab() {
   const uid = useId();
-  const [leftWidth, setLeftWidth] = useState(288); // 288px = w-72
+  const [leftWidth, setLeftWidth] = useState(340);
   const isDragging = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -104,9 +104,12 @@ export function SetupTab() {
     reorderPositions(arrayMove(ids, oldIndex, newIndex));
   }
 
+  const [addMenuOpen, setAddMenuOpen] = useState(false);
+  const addMenuRef = useRef<HTMLDivElement>(null);
+
   if (!event) return null;
 
-  function handleAddPosition() {
+  function handleAddPosition(shape: string = "rectangular") {
     const colorIndex = positions.length % POSITION_COLORS.length;
     addPosition({
       id: generateId(),
@@ -115,12 +118,15 @@ export function SetupTab() {
       x: 80 + (positions.length % 4) * 180,
       y: 80 + Math.floor(positions.length / 4) * 120,
       width: 140,
-      height: 80,
+      height: shape === "round" ? 140 : 80,
       color: POSITION_COLORS[colorIndex],
       rotation: 0,
       sortOrder: positions.length,
       showSize: true,
+      shape,
+      collapsed: false,
     });
+    setAddMenuOpen(false);
   }
 
   return (
@@ -206,9 +212,30 @@ export function SetupTab() {
         <section className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <h2 className="text-xs text-muted uppercase tracking-wider">Positions</h2>
-            <Button size="sm" variant="outline" onClick={handleAddPosition}>
-              + Add
-            </Button>
+            <div ref={addMenuRef} className="relative">
+              <Button size="sm" variant="outline" onClick={() => setAddMenuOpen((o) => !o)}>
+                + Add ▾
+              </Button>
+              {addMenuOpen && (
+                <div
+                  className="absolute right-0 top-full mt-1 z-20 bg-surface border border-border rounded-lg shadow-lg py-1 min-w-[120px]"
+                  onMouseLeave={() => setAddMenuOpen(false)}
+                >
+                  <button
+                    className="w-full text-left px-3 py-1.5 text-xs text-text hover:bg-hover transition-colors cursor-pointer"
+                    onClick={() => handleAddPosition("rectangular")}
+                  >
+                    ▭ Rectangular
+                  </button>
+                  <button
+                    className="w-full text-left px-3 py-1.5 text-xs text-text hover:bg-hover transition-colors cursor-pointer"
+                    onClick={() => handleAddPosition("round")}
+                  >
+                    ◯ Round
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
           {positions.length === 0 && (
             <p className="text-xs text-dim py-2">No positions yet.</p>

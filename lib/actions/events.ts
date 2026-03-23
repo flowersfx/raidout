@@ -117,6 +117,9 @@ export async function saveEventSnapshot(snapshot: {
           color: p.color,
           rotation: p.rotation ?? 0,
           sortOrder: p.sortOrder ?? 0,
+          showSize: p.showSize ?? true,
+          shape: p.shape ?? "rectangular",
+          collapsed: p.collapsed ?? false,
         },
         update: {
           name: p.name,
@@ -127,6 +130,9 @@ export async function saveEventSnapshot(snapshot: {
           color: p.color,
           rotation: p.rotation ?? 0,
           sortOrder: p.sortOrder ?? 0,
+          showSize: p.showSize ?? true,
+          shape: p.shape ?? "rectangular",
+          collapsed: p.collapsed ?? false,
         },
       });
     }

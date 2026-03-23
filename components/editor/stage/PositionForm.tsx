@@ -16,11 +16,19 @@ export function PositionForm({ position, dragHandle }: Props) {
   const { patchPosition, removePosition, clonePosition, selectedPositionIds, setSelectedPosition } = useEventStore();
   const uid = useId();
   const isSelected = selectedPositionIds.has(position.id);
-  const [collapsed, setCollapsed] = useState(false);
+  const collapsed = position.collapsed ?? false;
   const [colorOpen, setColorOpen] = useState(false);
   const colorRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const patch = (fields: Partial<Position>) => patchPosition(position.id, fields);
+
+  // Scroll into view when selected via the stage
+  useEffect(() => {
+    if (isSelected) {
+      cardRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [isSelected]);
 
   // Close color picker on outside click
   useEffect(() => {
@@ -36,6 +44,7 @@ export function PositionForm({ position, dragHandle }: Props) {
 
   return (
     <div
+      ref={cardRef}
       className="p-3 rounded-lg bg-raised flex flex-col gap-2 cursor-pointer transition-colors"
       style={{
         border: isSelected ? `2px solid ${position.color}` : "1px solid var(--border)",
@@ -85,7 +94,7 @@ export function PositionForm({ position, dragHandle }: Props) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setCollapsed((c) => !c)}
+              onClick={() => patch({ collapsed: !collapsed })}
               title={collapsed ? "Expand" : "Collapse"}
             >
               <svg
@@ -169,15 +178,33 @@ export function PositionForm({ position, dragHandle }: Props) {
               min={20}
             />
           </div>
-          <label className="flex items-center gap-1.5 text-xs text-muted cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={position.showSize ?? true}
-              onChange={(e) => patch({ showSize: e.target.checked })}
-              className="accent-accent"
-            />
-            Show size on stage
-          </label>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted">Shape</span>
+            {(["rectangular", "round"] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                title={s === "rectangular" ? "Rectangular" : "Round"}
+                onClick={() => patch({ shape: s })}
+                className={`px-1.5 py-0.5 text-xs rounded border transition-colors ${
+                  (position.shape ?? "rectangular") === s
+                    ? "border-accent text-accent bg-accent/10"
+                    : "border-border text-muted hover:border-muted"
+                }`}
+              >
+                {s === "rectangular" ? "▭" : "◯"}
+              </button>
+            ))}
+            <label className="flex items-center gap-1.5 text-xs text-muted cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={position.showSize ?? true}
+                onChange={(e) => patch({ showSize: e.target.checked })}
+                className="accent-accent"
+              />
+              Show size
+            </label>
+          </div>
         </>
       )}
     </div>

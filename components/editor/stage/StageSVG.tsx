@@ -259,7 +259,16 @@ export function StageSVG({
 
           return (
             <clipPath key={`clip-${pos.id}`} id={`clip-${pos.id}`}>
-              <rect x={pos.x} y={pos.y} width={pos.width} height={expandedH} rx={3} />
+              {pos.shape === "round" ? (
+                <ellipse
+                  cx={pos.x + pos.width / 2}
+                  cy={pos.y + pos.height / 2}
+                  rx={pos.width / 2}
+                  ry={pos.height / 2}
+                />
+              ) : (
+                <rect x={pos.x} y={pos.y} width={pos.width} height={expandedH} rx={3} />
+              )}
             </clipPath>
           );
         })}
@@ -320,9 +329,26 @@ export function StageSVG({
           onDragMouseDown(e, pos);
         } : undefined;
 
+        const isRound = pos.shape === "round";
+
         return (
           <g key={pos.id} transform={rotation ? `rotate(${rotation} ${cx} ${cy})` : undefined}>
-            {showAll ? (
+            {isRound ? (
+              /* Circle / oval */
+              <ellipse
+                cx={cx}
+                cy={cy}
+                rx={pos.width / 2}
+                ry={pos.height / 2}
+                fill={pos.color + "22"}
+                stroke={pos.color}
+                strokeWidth={isSelected ? 2 : 1.5}
+                opacity={isSelected ? 1 : 0.5}
+                style={mode === "edit" ? { cursor: "grab" } : undefined}
+                onMouseDown={handleMouseDown}
+                onClick={handleClick}
+              />
+            ) : showAll ? (
               <>
                 {/* Combined background fill for original + overflow area */}
                 <rect
@@ -391,7 +417,7 @@ export function StageSVG({
               {/* Position name */}
               <text
                 x={pos.x + pos.width / 2}
-                y={pos.y + POS_NAME_Y}
+                y={isRound ? cy + POS_NAME_SIZE * 0.35 : pos.y + POS_NAME_Y}
                 textAnchor="middle"
                 fontSize={POS_NAME_SIZE}
                 fontWeight="600"
