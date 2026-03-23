@@ -137,7 +137,7 @@ export function TimelineBar({ artists, positions }: Props) {
   const totalHeight = currentTop;
 
   return (
-    <div className="relative bg-raised rounded-lg overflow-hidden border border-border" style={{ height: totalHeight }}>
+    <div className="relative bg-black rounded-lg overflow-hidden border border-border" style={{ height: totalHeight }}>
       {/* Hour ticks — full height */}
       {ticks.map((h) => {
         const pct = toPercent(h * 60);
