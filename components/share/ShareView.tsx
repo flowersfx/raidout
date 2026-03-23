@@ -12,9 +12,10 @@ interface Props {
   event: Event;
   positions: Position[];
   artists: Artist[];
+  printMode?: boolean;
 }
 
-export function ShareView({ event, positions, artists }: Props) {
+export function ShareView({ event, positions, artists, printMode = false }: Props) {
   const allStartTimes = artists.flatMap((a) => getAllSlots(a).map((s) => s.startTime));
   const sorted = [...artists].sort((a, b) =>
     sortableStartTime(a.startTime, allStartTimes) - sortableStartTime(b.startTime, allStartTimes)
@@ -54,7 +55,7 @@ export function ShareView({ event, positions, artists }: Props) {
       <section className="max-w-6xl mx-auto w-full px-6">
         <h2 className="text-xs text-muted uppercase tracking-wider mb-3">{event.stageName ?? "Stage"} Plot</h2>
         <div
-          className="border border-border rounded-lg overflow-hidden bg-[#111] w-full"
+          className={`border border-border rounded-lg overflow-hidden w-full ${printMode ? "bg-white" : "bg-[#111]"}`}
           style={{ aspectRatio: stageAspect }}
         >
           <StageSVG
@@ -65,6 +66,7 @@ export function ShareView({ event, positions, artists }: Props) {
             stageDepth={event.stageDepth}
             fohPosition={fohPos}
             annotateGear
+            printMode={printMode}
           />
         </div>
       </section>

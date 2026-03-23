@@ -7,10 +7,13 @@ import type { Event, Position, Artist } from "@/types/models";
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ print?: string }>;
 }
 
-export default async function SharePage({ params }: Props) {
+export default async function SharePage({ params, searchParams }: Props) {
   const { id } = await params;
+  const { print } = await searchParams;
+  const printMode = print === "1";
   const event = await getEvent(id);
   if (!event) notFound();
 
@@ -46,6 +49,7 @@ export default async function SharePage({ params }: Props) {
         event={serializedEvent}
         positions={event.positions as Position[]}
         artists={event.artists as Artist[]}
+        printMode={printMode}
       />
     </div>
   );

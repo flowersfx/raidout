@@ -52,18 +52,18 @@ export async function GET(
       content: `
         html {
           --bg: #ffffff !important;
-          --bg-surface: #f5f5f5 !important;
-          --bg-raised: #eeeeee !important;
-          --bg-hover: #e0e0e0 !important;
+          --bg-surface: #ffffff !important;
+          --bg-raised: #ffffff !important;
+          --bg-hover: #ffffff !important;
           --border: #cccccc !important;
           --border-muted: #dddddd !important;
           --text: #111111 !important;
           --text-muted: #555555 !important;
           --text-dim: #888888 !important;
           --color-bg: #ffffff !important;
-          --color-surface: #f5f5f5 !important;
-          --color-raised: #eeeeee !important;
-          --color-hover: #e0e0e0 !important;
+          --color-surface: #ffffff !important;
+          --color-raised: #ffffff !important;
+          --color-hover: #ffffff !important;
           --color-border: #cccccc !important;
           --color-text: #111111 !important;
           --color-muted: #555555 !important;

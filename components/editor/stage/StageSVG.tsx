@@ -15,6 +15,7 @@ interface Props {
   stageDepth?: number;
   fohPosition?: string;
   annotateGear?: boolean; // show first gear line near each position
+  printMode?: boolean;    // white-background print/PDF mode
 }
 
 const GRID_STEP = 100; // grid lines every 100 cm
@@ -75,6 +76,7 @@ export function StageSVG({
   stageDepth: extDepth,
   fohPosition: extFohPosition,
   annotateGear = false,
+  printMode = false,
 }: Props) {
   const store = useEventStore();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -223,7 +225,7 @@ export function StageSVG({
       {/* Stage background */}
       <rect
         x={0} y={0} width={stageWidth} height={stageDepth}
-        fill="#111" stroke="#2a2a2a" strokeWidth={1}
+        fill={printMode ? "#ffffff" : "#111"} stroke={printMode ? "#cccccc" : "#2a2a2a"} strokeWidth={1}
         onMouseDown={mode === "edit" ? onBgMouseDown : undefined}
       />
 
@@ -235,7 +237,7 @@ export function StageSVG({
           y1={0}
           x2={(i + 1) * GRID_STEP}
           y2={stageDepth}
-          stroke="#1e1e1e"
+          stroke={printMode ? "#dedede" : "#1e1e1e"}
           strokeWidth={1}
           style={{ pointerEvents: "none" }}
         />
@@ -247,7 +249,7 @@ export function StageSVG({
           y1={(i + 1) * GRID_STEP}
           x2={stageWidth}
           y2={(i + 1) * GRID_STEP}
-          stroke="#1e1e1e"
+          stroke={printMode ? "#dedede" : "#1e1e1e"}
           strokeWidth={1}
           style={{ pointerEvents: "none" }}
         />
@@ -353,7 +355,7 @@ export function StageSVG({
                 cy={cy}
                 rx={pos.width / 2}
                 ry={pos.height / 2}
-                fill={showBorders ? pos.color + "22" : "transparent"}
+                fill={showBorders ? pos.color + (printMode ? "40" : "22") : "transparent"}
                 stroke={showBorders ? pos.color : "none"}
                 strokeWidth={isSelected ? 2 : 1.5}
                 opacity={isSelected ? 1 : 0.5}
@@ -369,7 +371,7 @@ export function StageSVG({
                   y={pos.y}
                   width={pos.width}
                   height={expandedH}
-                  fill={showBorders ? pos.color + "22" : "transparent"}
+                  fill={showBorders ? pos.color + (printMode ? "40" : "22") : "transparent"}
                   rx={3}
                   style={mode === "edit" ? { cursor: "grab" } : undefined}
                   onMouseDown={handleMouseDown}
@@ -403,7 +405,7 @@ export function StageSVG({
                 y={pos.y}
                 width={pos.width}
                 height={pos.height}
-                fill={showBorders ? pos.color + "22" : "transparent"}
+                fill={showBorders ? pos.color + (printMode ? "40" : "22") : "transparent"}
                 stroke={showBorders ? pos.color : "none"}
                 strokeWidth={isSelected ? 2 : 1.5}
                 opacity={isSelected ? 1 : 0.5}
@@ -457,7 +459,7 @@ export function StageSVG({
                           y={y}
                           textAnchor="middle"
                           fontSize={ARTIST_SIZE}
-                          fill="#ccc"
+                          fill={printMode ? "#333" : "#ccc"}
                           style={{ pointerEvents: "none", userSelect: "none" }}
                         >
                           {line}
@@ -476,7 +478,7 @@ export function StageSVG({
                       y={pos.y + ARTIST_START_Y + i * ARTIST_LINE_H}
                       textAnchor="middle"
                       fontSize={ARTIST_SIZE}
-                      fill="#ccc"
+                      fill={printMode ? "#333" : "#ccc"}
                       style={{ pointerEvents: "none", userSelect: "none" }}
                     >
                       {truncate(a.name, pos.width, ARTIST_SIZE)}
@@ -506,7 +508,7 @@ export function StageSVG({
                 y={pos.y + pos.height + 12}
                 textAnchor="middle"
                 fontSize={7.5}
-                fill="#888"
+                fill={printMode ? "#555" : "#888"}
                 style={{ pointerEvents: "none", userSelect: "none" }}
               >
                 {gearLines.map((line, gi) => (
@@ -620,7 +622,7 @@ export function StageSVG({
 
         return (
           <>
-            <rect x={stripX} y={stripY} width={stripW} height={stripH} fill="#0a0a0a" />
+            <rect x={stripX} y={stripY} width={stripW} height={stripH} fill={printMode ? "#ffffff" : "#0a0a0a"} />
 
             {/* Spectrum bars */}
             {!isVertical
@@ -740,7 +742,7 @@ export function StageSVG({
                   textAnchor="middle"
                   fontSize={9}
                   fontWeight="600"
-                  fill="#666"
+                  fill={printMode ? "#888" : "#666"}
                   style={{ userSelect: "none" }}
                 >
                   {ch}
@@ -753,7 +755,7 @@ export function StageSVG({
                 textAnchor="middle"
                 fontSize={9}
                 fontWeight="600"
-                fill="#666"
+                fill={printMode ? "#888" : "#666"}
                 letterSpacing={3}
                 style={{ userSelect: "none" }}
               >
