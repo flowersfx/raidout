@@ -181,7 +181,7 @@ export function PositionForm({ position, dragHandle }: Props) {
                 onChange={(e) => patch({ showSize: e.target.checked })}
                 className="accent-accent"
               />
-              Show size
+              Size
             </label>
             <label className="flex items-center gap-1.5 text-xs text-muted cursor-pointer select-none">
               <input
@@ -190,7 +190,7 @@ export function PositionForm({ position, dragHandle }: Props) {
                 onChange={(e) => patch({ showBorders: e.target.checked })}
                 className="accent-accent"
               />
-              Show borders
+              Borders
             </label>
           </div>
         </>
