@@ -82,4 +82,6 @@ export const POSITION_COLORS = [
   "#ff6e40",
   "#40c4ff",
   "#b2ff59",
+  "#9e9e9e",
+  "#546e7a",
 ] as const;
