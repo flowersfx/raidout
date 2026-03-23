@@ -125,6 +125,7 @@ export function SetupTab() {
       rotation: 0,
       sortOrder: positions.length,
       showSize: true,
+      showBorders: true,
       shape,
       collapsed: false,
     });
