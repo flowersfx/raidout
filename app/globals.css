@@ -128,6 +128,58 @@ input[type="number"].show-spin::-webkit-outer-spin-button {
   height: 1.5em;
 }
 
+/* ─── FOH spectrum bars ─────────────────────────────────────────────────────── */
+/* scaleY variants for horizontal strips (top / bottom) */
+@keyframes foh-a { 0%,100%{transform:scaleY(.12)} 25%{transform:scaleY(.85)} 60%{transform:scaleY(.40)} 82%{transform:scaleY(.72)} }
+@keyframes foh-b { 0%,100%{transform:scaleY(.55)} 30%{transform:scaleY(.08)} 65%{transform:scaleY(.90)} }
+@keyframes foh-c { 0%,100%{transform:scaleY(.70)} 15%{transform:scaleY(.25)} 50%{transform:scaleY(.95)} 82%{transform:scaleY(.38)} }
+@keyframes foh-d { 0%,100%{transform:scaleY(.32)} 40%{transform:scaleY(.78)} 72%{transform:scaleY(.15)} }
+@keyframes foh-e { 0%,100%{transform:scaleY(.60)} 22%{transform:scaleY(.05)} 55%{transform:scaleY(.82)} 88%{transform:scaleY(.45)} }
+@keyframes foh-f { 0%,100%{transform:scaleY(.20)} 35%{transform:scaleY(.92)} 60%{transform:scaleY(.50)} 80%{transform:scaleY(.15)} }
+@keyframes foh-g { 0%,100%{transform:scaleY(.75)} 12%{transform:scaleY(.32)} 45%{transform:scaleY(.62)} 78%{transform:scaleY(.10)} }
+@keyframes foh-h { 0%,100%{transform:scaleY(.42)} 28%{transform:scaleY(.88)} 52%{transform:scaleY(.22)} 80%{transform:scaleY(.78)} }
+/* scaleX variants for vertical strips (left / right) */
+@keyframes foh-xa { 0%,100%{transform:scaleX(.12)} 25%{transform:scaleX(.85)} 60%{transform:scaleX(.40)} 82%{transform:scaleX(.72)} }
+@keyframes foh-xb { 0%,100%{transform:scaleX(.55)} 30%{transform:scaleX(.08)} 65%{transform:scaleX(.90)} }
+@keyframes foh-xc { 0%,100%{transform:scaleX(.70)} 15%{transform:scaleX(.25)} 50%{transform:scaleX(.95)} 82%{transform:scaleX(.38)} }
+@keyframes foh-xd { 0%,100%{transform:scaleX(.32)} 40%{transform:scaleX(.78)} 72%{transform:scaleX(.15)} }
+@keyframes foh-xe { 0%,100%{transform:scaleX(.60)} 22%{transform:scaleX(.05)} 55%{transform:scaleX(.82)} 88%{transform:scaleX(.45)} }
+@keyframes foh-xf { 0%,100%{transform:scaleX(.20)} 35%{transform:scaleX(.92)} 60%{transform:scaleX(.50)} 80%{transform:scaleX(.15)} }
+@keyframes foh-xg { 0%,100%{transform:scaleX(.75)} 12%{transform:scaleX(.32)} 45%{transform:scaleX(.62)} 78%{transform:scaleX(.10)} }
+@keyframes foh-xh { 0%,100%{transform:scaleX(.42)} 28%{transform:scaleX(.88)} 52%{transform:scaleX(.22)} 80%{transform:scaleX(.78)} }
+/* Base bar styles */
+.foh-bar {
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  transform-box: fill-box;
+}
+.foh-bar-h { transform-origin: 50% 100%; }
+.foh-bar-v { transform-origin: 0% 50%; }
+
+/* Animation name classes — horizontal (scaleY) */
+.foh-y-a { animation-name: foh-a; }
+.foh-y-b { animation-name: foh-b; }
+.foh-y-c { animation-name: foh-c; }
+.foh-y-d { animation-name: foh-d; }
+.foh-y-e { animation-name: foh-e; }
+.foh-y-f { animation-name: foh-f; }
+.foh-y-g { animation-name: foh-g; }
+.foh-y-h { animation-name: foh-h; }
+
+/* Animation name classes — vertical (scaleX) */
+.foh-x-a { animation-name: foh-xa; }
+.foh-x-b { animation-name: foh-xb; }
+.foh-x-c { animation-name: foh-xc; }
+.foh-x-d { animation-name: foh-xd; }
+.foh-x-e { animation-name: foh-xe; }
+.foh-x-f { animation-name: foh-xf; }
+.foh-x-g { animation-name: foh-xg; }
+.foh-x-h { animation-name: foh-xh; }
+
+/* Hide bars in print / PDF and respect reduced-motion preference */
+.print-mode .foh-bar { display: none; }
+@media (prefers-reduced-motion: reduce) { .foh-bar { animation: none; } }
+
 /* ─── Focus ──────────────────────────────────────────────────────────────────── */
 :focus-visible {
   outline: 2px solid var(--accent);

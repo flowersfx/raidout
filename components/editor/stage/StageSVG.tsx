@@ -596,6 +596,19 @@ export function StageSVG({
         const stripW = isVertical ? FOH_LABEL_HEIGHT : stageWidth;
         const stripH = isVertical ? stageDepth : FOH_LABEL_HEIGHT;
 
+        const SUFFIXES = ["a","b","c","d","e","f","g","h"] as const;
+        const DURS     = [0.70, 1.10, 0.85, 1.45, 0.95, 1.25, 0.75, 1.00];
+
+        // Horizontal strip bars (scaleY, anchored at bottom of strip)
+        const BAR_W      = 3;
+        const BAR_MAX_H  = FOH_LABEL_HEIGHT - 4;
+        const H_SPACING  = 11;
+
+        // Vertical strip bars (scaleX, anchored at strip's stage-side edge)
+        const BAR_THICK  = 3;
+        const BAR_MAX_W  = FOH_LABEL_HEIGHT - 4;
+        const V_SPACING  = 11;
+
         const LETTER_SPACING = 12;
         const totalLetterHeight = FOH_TEXT.length * LETTER_SPACING;
         const letterStartY = (stageDepth - totalLetterHeight) / 2 + LETTER_SPACING;
@@ -604,6 +617,116 @@ export function StageSVG({
         return (
           <>
             <rect x={stripX} y={stripY} width={stripW} height={stripH} fill="#0a0a0a" />
+
+            {/* Spectrum bars */}
+            {!isVertical
+              ? (() => {
+                  // Split into L/R channels around the centered label text
+                  // "FRONT OF HOUSE" at fontSize=9 letterSpacing=3 ≈ 120px wide
+                  const TEXT_HALF_GAP = 70;
+                  const centerX = stageOffsetX + stageWidth / 2;
+                  const leftEnd = centerX - TEXT_HALF_GAP;
+                  const rightStart = centerX + TEXT_HALF_GAP;
+                  const leftW = leftEnd - stageOffsetX;
+                  const rightW = stageOffsetX + stageWidth - rightStart;
+                  const nL = Math.floor(leftW / H_SPACING);
+                  const nR = Math.floor(rightW / H_SPACING);
+                  const lSpacing = leftW / Math.max(nL, 1);
+                  const rSpacing = rightW / Math.max(nR, 1);
+                  const barY = stripY + stripH - 2 - BAR_MAX_H;
+                  return (
+                    <>
+                      {/* Left channel — bars run left→center, mirrored delays */}
+                      {Array.from({ length: nL }, (_, i) => {
+                        const idx = (nL - 1 - i) % 8; // highest-energy bar nearest center
+                        return (
+                          <rect
+                            key={`l${i}`}
+                            className={`foh-bar foh-bar-h foh-y-${SUFFIXES[idx]}`}
+                            x={stageOffsetX + (i + 0.5) * lSpacing - BAR_W / 2}
+                            y={barY}
+                            width={BAR_W}
+                            height={BAR_MAX_H}
+                            fill="#00e5ff"
+                            opacity={0.22}
+                            rx={1}
+                            style={{
+                              animationDuration: `${DURS[idx]}s`,
+                              animationDelay: `-${((nL - 1 - i) * 0.17 % 2.5).toFixed(2)}s`,
+                            }}
+                          />
+                        );
+                      })}
+                      {/* Right channel — bars run center→right */}
+                      {Array.from({ length: nR }, (_, i) => {
+                        const idx = i % 8; // highest-energy bar nearest center
+                        return (
+                          <rect
+                            key={`r${i}`}
+                            className={`foh-bar foh-bar-h foh-y-${SUFFIXES[idx]}`}
+                            x={rightStart + (i + 0.5) * rSpacing - BAR_W / 2}
+                            y={barY}
+                            width={BAR_W}
+                            height={BAR_MAX_H}
+                            fill="#00e5ff"
+                            opacity={0.22}
+                            rx={1}
+                            style={{
+                              animationDuration: `${DURS[idx]}s`,
+                              animationDelay: `-${(i * 0.17 % 2.5).toFixed(2)}s`,
+                            }}
+                          />
+                        );
+                      })}
+                    </>
+                  );
+                })()
+              : (() => {
+                  // Split into top/bottom channels around the centered vertical label text
+                  const TEXT_HALF_GAP_V = 90;
+                  const centerY = stageOffsetY + stageDepth / 2;
+                  const topEnd = centerY - TEXT_HALF_GAP_V;
+                  const botStart = centerY + TEXT_HALF_GAP_V;
+                  const topH = topEnd - stageOffsetY;
+                  const botH = stageOffsetY + stageDepth - botStart;
+                  const nTop = Math.floor(topH / V_SPACING);
+                  const nBot = Math.floor(botH / V_SPACING);
+                  const tSpacing = topH / Math.max(nTop, 1);
+                  const bSpacing = botH / Math.max(nBot, 1);
+                  const barX = fohPosition === "left" ? 2 : stripX + 2;
+                  const originX = fohPosition === "left" ? "100% 50%" : undefined;
+                  const barRect = (key: string, cy: number, idx: number, delay: string) => (
+                    <rect
+                      key={key}
+                      className={`foh-bar foh-bar-v foh-x-${SUFFIXES[idx]}`}
+                      x={barX}
+                      y={cy - BAR_THICK / 2}
+                      width={BAR_MAX_W}
+                      height={BAR_THICK}
+                      fill="#00e5ff"
+                      opacity={0.22}
+                      rx={1}
+                      style={{ animationDuration: `${DURS[idx]}s`, animationDelay: delay, transformOrigin: originX }}
+                    />
+                  );
+                  return (
+                    <>
+                      {/* Top channel — bars run top→center, mirrored delays */}
+                      {Array.from({ length: nTop }, (_, i) => {
+                        const idx = (nTop - 1 - i) % 8;
+                        return barRect(`t${i}`, stageOffsetY + (i + 0.5) * tSpacing, idx, `-${((nTop - 1 - i) * 0.17 % 2.5).toFixed(2)}s`);
+                      })}
+                      {/* Bottom channel — bars run center→bottom */}
+                      {Array.from({ length: nBot }, (_, i) => {
+                        const idx = i % 8;
+                        return barRect(`b${i}`, botStart + (i + 0.5) * bSpacing, idx, `-${(i * 0.17 % 2.5).toFixed(2)}s`);
+                      })}
+                    </>
+                  );
+                })()
+            }
+
+            {/* Label text — rendered on top of bars */}
             {isVertical ? (
               FOH_TEXT.split("").map((ch, i) => (
                 <text
@@ -613,7 +736,7 @@ export function StageSVG({
                   textAnchor="middle"
                   fontSize={9}
                   fontWeight="600"
-                  fill="#555"
+                  fill="#666"
                   style={{ userSelect: "none" }}
                 >
                   {ch}
@@ -626,7 +749,7 @@ export function StageSVG({
                 textAnchor="middle"
                 fontSize={9}
                 fontWeight="600"
-                fill="#555"
+                fill="#666"
                 letterSpacing={3}
                 style={{ userSelect: "none" }}
               >
