@@ -88,10 +88,11 @@ export function StageSVG({
   const fohPosition = extFohPosition ?? store.event?.fohPosition ?? "bottom";
 
   // Compute stage offset and total SVG dimensions based on FOH strip position
+  const fohHidden    = fohPosition === "none";
   const stageOffsetX = fohPosition === "left" ? FOH_LABEL_HEIGHT : 0;
   const stageOffsetY = fohPosition === "top"  ? FOH_LABEL_HEIGHT : 0;
-  const totalWidth   = (fohPosition === "left" || fohPosition === "right") ? stageWidth + FOH_LABEL_HEIGHT : stageWidth;
-  const totalHeight  = (fohPosition === "top"  || fohPosition === "bottom") ? stageDepth + FOH_LABEL_HEIGHT : stageDepth;
+  const totalWidth   = (!fohHidden && (fohPosition === "left" || fohPosition === "right")) ? stageWidth + FOH_LABEL_HEIGHT : stageWidth;
+  const totalHeight  = (!fohHidden && (fohPosition === "top"  || fohPosition === "bottom")) ? stageDepth + FOH_LABEL_HEIGHT : stageDepth;
 
   // Selection rectangle state
   const [selRect, setSelRect] = useState<SelectionRect | null>(null);
@@ -588,7 +589,7 @@ export function StageSVG({
       )}
 
       {/* FOH label strip */}
-      {(() => {
+      {!fohHidden && (() => {
         const FOH_TEXT = "FRONT OF HOUSE";
         const isVertical = fohPosition === "left" || fohPosition === "right";
         const stripX = fohPosition === "right" ? stageOffsetX + stageWidth : 0;

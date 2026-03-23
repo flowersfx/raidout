@@ -21,8 +21,11 @@ export function ShareView({ event, positions, artists }: Props) {
   );
 
   const fohPos = event.fohPosition ?? "bottom";
+  const fohHidden = fohPos === "none";
   const isVerticalFoh = fohPos === "left" || fohPos === "right";
-  const stageAspect = isVerticalFoh
+  const stageAspect = fohHidden
+    ? event.stageWidth / event.stageDepth
+    : isVerticalFoh
     ? (event.stageWidth + FOH_LABEL_HEIGHT) / event.stageDepth
     : event.stageWidth / (event.stageDepth + FOH_LABEL_HEIGHT);
 

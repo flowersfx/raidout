@@ -205,20 +205,23 @@ export function SetupTab() {
               <div className="grid grid-cols-3 gap-0.5" style={{ width: 54 }}>
               {[
                 [null,     "top",    null   ],
-                ["left",   null,     "right"],
+                ["left",   "none",   "right"],
                 [null,     "bottom", null   ],
               ].map((row, ri) =>
                 row.map((pos, ci) => {
                   if (!pos) return <div key={`${ri}-${ci}`} />;
-                  const icons: Record<string, string> = { top: "↓", left: "→", right: "←", bottom: "↑" };
+                  const icons: Record<string, string> = { top: "↓", left: "→", right: "←", bottom: "↑", none: "✕" };
                   const active = (event.fohPosition ?? "bottom") === pos;
+                  const isNone = pos === "none";
                   return (
                     <button
                       key={pos}
-                      title={pos.charAt(0).toUpperCase() + pos.slice(1)}
+                      title={isNone ? "No FOH" : pos.charAt(0).toUpperCase() + pos.slice(1)}
                       onClick={() => patchEvent({ fohPosition: pos })}
                       className={`w-full aspect-square text-xs rounded transition-colors flex items-center justify-center ${
-                        active
+                        active && isNone
+                          ? "bg-muted/20 text-muted border border-muted"
+                          : active
                           ? "bg-accent/20 text-accent border border-accent"
                           : "text-muted hover:bg-hover border border-border"
                       }`}
