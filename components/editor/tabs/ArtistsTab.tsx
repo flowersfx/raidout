@@ -75,6 +75,9 @@ export function ArtistsTab() {
       arrivalTime: null,
       soundcheckStart: null,
       soundcheckEnd: null,
+      soundcheckMinLength: null,
+      intakeToken: crypto.randomUUID(),
+      intakeUpdatedAt: null,
       sortOrder: artists.length,
     });
   }

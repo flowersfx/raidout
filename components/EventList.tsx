@@ -23,6 +23,7 @@ interface EventData {
   date: string;
   venue: string;
   stageName: string;
+  hasUnreadIntake: boolean;
 }
 
 interface PendingClone {
@@ -112,6 +113,7 @@ export function EventList({ events: initialEvents }: { events: EventData[] }) {
         date={event.date}
         venue={event.venue}
         stageName={event.stageName}
+        hasUnreadIntake={event.hasUnreadIntake}
         onDuplicateStart={() => startPendingClone(event.id, event.name)}
       />
     );

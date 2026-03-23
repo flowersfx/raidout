@@ -22,6 +22,7 @@ export default async function SharePage({ params, searchParams }: Props) {
     date: event.date.toISOString(),
     createdAt: event.createdAt.toISOString(),
     updatedAt: event.updatedAt.toISOString(),
+    artistsLastReviewedAt: event.artistsLastReviewedAt?.toISOString() ?? null,
     stages: undefined,
     positions: undefined,
     artists: undefined,

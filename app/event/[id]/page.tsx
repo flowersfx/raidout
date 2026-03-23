@@ -18,6 +18,7 @@ export default async function EventPage({ params }: Props) {
       date: event.date.toISOString(),
       createdAt: event.createdAt.toISOString(),
       updatedAt: event.updatedAt.toISOString(),
+      artistsLastReviewedAt: event.artistsLastReviewedAt?.toISOString() ?? null,
       stages: undefined,
       positions: undefined,
       artists: undefined,
@@ -25,7 +26,10 @@ export default async function EventPage({ params }: Props) {
     },
     stages: event.stages,
     positions: event.positions,
-    artists: event.artists,
+    artists: event.artists.map((a) => ({
+      ...a,
+      intakeUpdatedAt: a.intakeUpdatedAt?.toISOString() ?? null,
+    })),
   };
 
   return <EventEditor initial={serialized} />;

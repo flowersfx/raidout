@@ -16,6 +16,7 @@ export interface Event {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  artistsLastReviewedAt: string | null; // ISO string
 }
 
 export interface Stage {
@@ -67,6 +68,9 @@ export interface Artist {
   arrivalTime: string | null;
   soundcheckStart: string | null;
   soundcheckEnd: string | null;
+  soundcheckMinLength: string | null;
+  intakeToken: string;
+  intakeUpdatedAt: string | null; // ISO string
   sortOrder: number;
 }
 

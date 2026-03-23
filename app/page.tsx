@@ -121,6 +121,12 @@ export default async function Dashboard() {
             stageName: e.stages.length > 1
             ? `${e.stages[0]?.name ?? "Stage"} +${e.stages.length - 1}`
             : (e.stages[0]?.name ?? "Stage"),
+            hasUnreadIntake: e.artists.some(
+              (a) =>
+                a.intakeUpdatedAt !== null &&
+                (e.artistsLastReviewedAt === null ||
+                  a.intakeUpdatedAt > e.artistsLastReviewedAt)
+            ),
           }))}
         />
       )}

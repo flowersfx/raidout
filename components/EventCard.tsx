@@ -12,10 +12,11 @@ interface Props {
   date: string; // ISO string
   venue: string;
   stageName: string;
+  hasUnreadIntake: boolean;
   onDuplicateStart: () => void;
 }
 
-export function EventCard({ id, name, date, venue, stageName, onDuplicateStart }: Props) {
+export function EventCard({ id, name, date, venue, stageName, hasUnreadIntake, onDuplicateStart }: Props) {
   const router = useRouter();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id });
@@ -131,8 +132,14 @@ export function EventCard({ id, name, date, venue, stageName, onDuplicateStart }
                 className="flex-1 flex items-center justify-between bg-surface border border-border rounded-lg px-5 py-4 hover:border-accent/40 hover:bg-raised transition-colors group text-left disabled:opacity-60 disabled:cursor-wait"
               >
                 <div>
-                  <p className="font-semibold text-text group-hover:text-accent transition-colors">
+                  <p className="font-semibold text-text group-hover:text-accent transition-colors flex items-center gap-2">
                     {name}
+                    {hasUnreadIntake && (
+                      <span className="relative flex h-2 w-2" title="New artist intake submissions">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-accent" />
+                      </span>
+                    )}
                   </p>
                   <p className="text-xs text-muted mt-0.5">
                     {formattedDate} &bull; {venue} &bull; {stageName}

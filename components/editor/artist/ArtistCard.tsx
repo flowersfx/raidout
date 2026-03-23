@@ -53,6 +53,17 @@ export function ArtistCard({ artist, dragHandle }: Props) {
           ))}
         </span>
 
+        {/* Intake status badge */}
+        {artist.intakeUpdatedAt ? (
+          <span className="text-xs font-medium text-accent border border-accent/30 rounded px-1.5 py-0.5 whitespace-nowrap">
+            SUBMITTED
+          </span>
+        ) : (
+          <span className="text-xs font-medium text-dim border border-border rounded px-1.5 py-0.5 whitespace-nowrap">
+            AWAITING
+          </span>
+        )}
+
         {/* Position badge */}
         {position && (
           <Badge label={position.name} color={position.color} />

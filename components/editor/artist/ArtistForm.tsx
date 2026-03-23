@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useState } from "react";
 import { useEventStore } from "@/store/eventStore";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -14,6 +14,7 @@ interface Props {
 export function ArtistForm({ artist }: Props) {
   const uid = useId();
   const { positions, stages, patchArtist, removeArtist, addArtist, artists } = useEventStore();
+  const [linkCopied, setLinkCopied] = useState(false);
   const multiStage = stages.length > 1;
 
   const patch = (fields: Partial<Artist>) => patchArtist(artist.id, fields);
@@ -36,11 +37,21 @@ export function ArtistForm({ artist }: Props) {
     patch({ extraSlots: JSON.stringify(extraSlots.filter((_, i) => i !== index)) });
   }
 
+  function handleCopyIntakeLink() {
+    const url = `${window.location.origin}/intake/${artist.intakeToken}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    });
+  }
+
   function handleDuplicate() {
     const newArtist: Artist = {
       ...artist,
       id: Math.random().toString(36).slice(2, 11),
       name: `${artist.name} (copy)`,
+      intakeToken: crypto.randomUUID(),
+      intakeUpdatedAt: null,
       sortOrder: artists.length,
     };
     addArtist(newArtist);
@@ -144,7 +155,7 @@ export function ArtistForm({ artist }: Props) {
       </button>
 
       {/* Soundcheck */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <Input
           id={`${uid}-sc-start`}
           label="Soundcheck start"
@@ -158,6 +169,13 @@ export function ArtistForm({ artist }: Props) {
           type="time"
           value={artist.soundcheckEnd ?? ""}
           onChange={(e) => patch({ soundcheckEnd: e.target.value || null })}
+        />
+        <Input
+          id={`${uid}-sc-min`}
+          label="Min length (proposed)"
+          placeholder="e.g. 45 min"
+          value={artist.soundcheckMinLength ?? ""}
+          onChange={(e) => patch({ soundcheckMinLength: e.target.value || null })}
         />
       </div>
 
@@ -195,7 +213,7 @@ export function ArtistForm({ artist }: Props) {
       />
 
       {/* Actions */}
-      <div className="flex gap-2 pt-1">
+      <div className="flex gap-2 pt-1 flex-wrap">
         <Button size="sm" variant="outline" onClick={handleDuplicate}>
           Duplicate
         </Button>
@@ -205,6 +223,10 @@ export function ArtistForm({ artist }: Props) {
           onClick={() => removeArtist(artist.id)}
         >
           Delete
+        </Button>
+        <div className="flex-1" />
+        <Button size="sm" variant="outline" onClick={handleCopyIntakeLink}>
+          {linkCopied ? "✓ Copied" : "⇗ Copy intake link"}
         </Button>
       </div>
     </div>

@@ -27,6 +27,7 @@ model Event {
   positions  Position[]
   artists    Artist[]
   sortOrder  Int        @default(0)
+  artistsLastReviewedAt DateTime?
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 }
@@ -79,8 +80,11 @@ model Artist {
   routing    String    @default("")
   notes           String    @default("")
   extraSlots      String    @default("[]")
-  arrivalTime     String?
-  soundcheckStart String?
-  soundcheckEnd   String?
-  sortOrder  Int       @default(0)
+  arrivalTime         String?
+  soundcheckStart     String?
+  soundcheckEnd       String?
+  soundcheckMinLength String?
+  intakeToken         String    @unique @default(cuid())
+  intakeUpdatedAt     DateTime?
+  sortOrder           Int       @default(0)
 }

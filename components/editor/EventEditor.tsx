@@ -10,6 +10,7 @@ import { ArtistsTab } from "./tabs/ArtistsTab";
 import { StagePlotTab } from "./tabs/StagePlotTab";
 import { FOHTab } from "./tabs/FOHTab";
 import { RunningOrderTab } from "./tabs/RunningOrderTab";
+import { markArtistsTabViewed } from "@/lib/actions/events";
 import { cn } from "@/lib/utils/cn";
 import type { Event, Stage, Position, Artist } from "@/types/models";
 
@@ -31,8 +32,23 @@ const TABS = [
 ];
 
 export function EventEditor({ initial }: Props) {
-  const { setEvent, setStages, setPositions, setArtists, activeTab, setActiveTab, event, removeSelectedPositions } =
+  const { setEvent, setStages, setPositions, setArtists, activeTab, setActiveTab, event, artists, patchEvent, removeSelectedPositions } =
     useEventStore();
+
+  const hasUnreadArtistIntake = artists.some(
+    (a) =>
+      a.intakeUpdatedAt !== null &&
+      (!event?.artistsLastReviewedAt ||
+        new Date(a.intakeUpdatedAt) > new Date(event.artistsLastReviewedAt))
+  );
+
+  function handleTabClick(tabId: typeof TABS[number]["id"]) {
+    setActiveTab(tabId);
+    if (tabId === "artists" && event && hasUnreadArtistIntake) {
+      patchEvent({ artistsLastReviewedAt: new Date().toISOString() });
+      markArtistsTabViewed(event.id);
+    }
+  }
 
   // Hydrate store from server data on mount
   useEffect(() => {
@@ -91,7 +107,7 @@ export function EventEditor({ initial }: Props) {
               </div>
             )}
             <button
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabClick(tab.id)}
               className={cn(
                 "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors cursor-pointer whitespace-nowrap",
                 activeTab === tab.id
@@ -101,7 +117,17 @@ export function EventEditor({ initial }: Props) {
                   : "border-transparent text-muted hover:text-text"
               )}
             >
-              {tab.label}
+              {tab.id === "artists" && hasUnreadArtistIntake ? (
+                <span className="flex items-center gap-1.5">
+                  {tab.label}
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-accent" />
+                  </span>
+                </span>
+              ) : (
+                tab.label
+              )}
             </button>
           </Fragment>
         ))}

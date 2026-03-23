@@ -13,7 +13,13 @@
       "Bash(netstat -ano)",
       "Bash(xargs grep:*)",
       "Bash(node -e \":*)",
-      "Bash(node -e \"const p = require\\(''./package.json''\\); console.log\\(JSON.stringify\\(Object.entries\\(p.dependencies\\).filter\\(\\([k]\\) => k.includes\\(''dnd''\\)\\), null, 2\\)\\)\")"
+      "Bash(node -e \"const p = require\\(''./package.json''\\); console.log\\(JSON.stringify\\(Object.entries\\(p.dependencies\\).filter\\(\\([k]\\) => k.includes\\(''dnd''\\)\\), null, 2\\)\\)\")",
+      "Bash(find c:/Code/FlowersFX/raidout/lib -type f -name *.ts -o -name *.tsx)",
+      "Bash(find c:/Code/FlowersFX/raidout -type f -name *nextauth* -o -name *auth*.config*)",
+      "Bash(grep -r \"nextauth\\\\|auth\\\\|middleware\" c:/Code/FlowersFX/raidout/app c:/Code/FlowersFX/raidout/lib -i --include=*.ts --include=*.tsx --include=*.js)",
+      "Bash(ls -la c:/Code/FlowersFX/raidout/*.ts c:/Code/FlowersFX/raidout/*.tsx)",
+      "Bash(find c:/Code/FlowersFX/raidout/app -name *.ts -o -name *.tsx)",
+      "Bash(grep -r \"import.*proxy\\\\|from.*proxy\" c:/Code/FlowersFX/raidout --include=*.ts --include=*.tsx --include=*.js)"
     ]
   }
 }
