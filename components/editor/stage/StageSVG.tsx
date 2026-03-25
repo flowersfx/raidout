@@ -17,6 +17,7 @@ interface Props {
   annotateGear?: boolean; // show first gear line near each position
   printMode?: boolean;    // white-background print/PDF mode
   filterStageId?: string; // only render positions belonging to this stage (edit/view store mode)
+  svgClassName?: string;  // override default "w-full h-full" on the <svg> element
 }
 
 const GRID_STEP = 100; // grid lines every 100 cm
@@ -79,6 +80,7 @@ export function StageSVG({
   annotateGear = false,
   printMode = false,
   filterStageId,
+  svgClassName,
 }: Props) {
   const store = useEventStore();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -221,7 +223,7 @@ export function StageSVG({
     <svg
       ref={svgRef}
       viewBox={`0 0 ${totalWidth} ${totalHeight}`}
-      className="w-full h-full"
+      className={svgClassName ?? "w-full h-full"}
       style={{ fontFamily: "var(--font-mono, monospace)" }}
     >
       {/* Stage content — offset so the FOH strip fits on any side */}

@@ -114,6 +114,7 @@ export function SetupTab() {
     reorderPositions(arrayMove(ids, oldIndex, newIndex));
   }
 
+  const [fitToView, setFitToView] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const addMenuRef = useRef<HTMLDivElement>(null);
 
@@ -410,16 +411,40 @@ export function SetupTab() {
         <p className="text-xs text-muted uppercase tracking-wider flex-shrink-0">
           {activeStage.name} Preview
         </p>
-        <div className="flex-1 min-h-0 flex items-center justify-center">
-          <div className="w-full h-full max-h-full">
+        {fitToView ? (
+          <div className="flex-1 min-h-0 flex items-center justify-center">
+            <div className="w-full h-full max-h-full">
+              <StageSVG
+                mode="edit"
+                stageWidth={activeStage.stageWidth}
+                stageDepth={activeStage.stageDepth}
+                fohPosition={activeStage.fohPosition}
+                filterStageId={activeStage.id}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 min-h-0 overflow-y-auto">
             <StageSVG
               mode="edit"
               stageWidth={activeStage.stageWidth}
               stageDepth={activeStage.stageDepth}
               fohPosition={activeStage.fohPosition}
               filterStageId={activeStage.id}
+              svgClassName="w-full h-auto"
             />
           </div>
+        )}
+        <div className="flex-shrink-0 flex items-center gap-3 pt-1 border-t border-border">
+          <label className="flex items-center gap-1.5 text-xs text-muted cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={fitToView}
+              onChange={(e) => setFitToView(e.target.checked)}
+              className="accent-accent"
+            />
+            Fit to view
+          </label>
         </div>
       </div>
     </div>
