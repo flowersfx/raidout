@@ -5,6 +5,12 @@ import type { Event, Stage, Position, Artist } from "@/types/models";
 
 type Tab = "setup" | "artists" | "plot" | "foh" | "order";
 
+export interface CanvasTransform {
+  panX: number;
+  panY: number;
+  scale: number;
+}
+
 interface DeletedPosition {
   position: Position;
   artists: Artist[];
@@ -68,6 +74,10 @@ interface EventStore {
   undoRemoveArtist(): void;
   reorderArtists(ids: string[]): void;
 
+  // Canvas pan/zoom state (persists across tab switches, keyed by stageId)
+  canvasTransforms: Record<string, CanvasTransform>;
+  setCanvasTransform(stageId: string, t: CanvasTransform): void;
+
   // UI actions
   setActiveTab(tab: Tab): void;
   setSelectedPosition(id: string | null): void;
@@ -99,6 +109,7 @@ export const useEventStore = create<EventStore>((set) => ({
   dirty: false,
   saving: false,
   saveError: null,
+  canvasTransforms: {},
 
   setEvent: (e) => set({ event: e }),
   patchEvent: (fields) =>
@@ -279,6 +290,9 @@ export const useEventStore = create<EventStore>((set) => ({
         .filter(Boolean) as import("@/types/models").Position[],
       dirty: true,
     })),
+
+  setCanvasTransform: (stageId, t) =>
+    set((s) => ({ canvasTransforms: { ...s.canvasTransforms, [stageId]: t } })),
 
   setActiveTab: (tab) => set({ activeTab: tab }),
   setSelectedPosition: (id) => set({

@@ -18,6 +18,10 @@ interface Props {
   printMode?: boolean;    // white-background print/PDF mode
   filterStageId?: string; // only render positions belonging to this stage (edit/view store mode)
   svgClassName?: string;  // override default "w-full h-full" on the <svg> element
+  // Canvas pan/zoom — when set, renders at exact pixel dimensions (1px per stage unit)
+  // so the parent's CSS transform controls zoom/pan. Removes "w-full h-full" class.
+  overrideWidth?: number;
+  overrideHeight?: number;
 }
 
 const GRID_STEP = 100; // grid lines every 100 cm
@@ -81,6 +85,8 @@ export function StageSVG({
   printMode = false,
   filterStageId,
   svgClassName,
+  overrideWidth,
+  overrideHeight,
 }: Props) {
   const store = useEventStore();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -223,8 +229,10 @@ export function StageSVG({
     <svg
       ref={svgRef}
       viewBox={`0 0 ${totalWidth} ${totalHeight}`}
-      className={svgClassName ?? "w-full h-full"}
-      style={{ fontFamily: "var(--font-mono, monospace)" }}
+      width={overrideWidth}
+      height={overrideHeight}
+      className={overrideWidth != null ? undefined : (svgClassName ?? "w-full h-full")}
+      style={{ fontFamily: "var(--font-mono, monospace)", ...(overrideWidth != null ? { display: "block" } : {}) }}
     >
       {/* Stage content — offset so the FOH strip fits on any side */}
       <g transform={stageOffsetX || stageOffsetY ? `translate(${stageOffsetX}, ${stageOffsetY})` : undefined}>

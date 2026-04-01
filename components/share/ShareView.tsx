@@ -1,4 +1,6 @@
-import { StageSVG } from "@/components/editor/stage/StageSVG";
+"use client";
+
+import { StageCanvas } from "@/components/editor/stage/StageCanvas";
 import { FOHArtistCard } from "@/components/editor/foh/FOHArtistCard";
 import { MasterInputList } from "@/components/editor/foh/MasterInputList";
 import { RunningOrderGrid } from "@/components/editor/running-order/RunningOrderGrid";
@@ -58,21 +60,19 @@ export function ShareView({ event, stages, positions, artists, printMode = false
         return (
           <section key={stage.id} className="max-w-6xl mx-auto w-full px-6">
             <h2 className="text-xs text-muted uppercase tracking-wider mb-3">{stage.name} Plot</h2>
-            <div
-              className={`border border-border rounded-lg overflow-hidden w-full ${printMode ? "bg-white" : "bg-[#111]"}`}
-              style={{ aspectRatio }}
-            >
-              <StageSVG
-                mode="view"
-                externalPositions={stagePositions}
-                externalArtists={artists}
-                stageWidth={stage.stageWidth}
-                stageDepth={stage.stageDepth}
-                fohPosition={stage.fohPosition}
-                annotateGear
-                printMode={printMode}
-              />
-            </div>
+            <StageCanvas
+              stageId={stage.id}
+              mode="view"
+              externalPositions={stagePositions}
+              externalArtists={artists}
+              stageWidth={stage.stageWidth}
+              stageDepth={stage.stageDepth}
+              fohPosition={stage.fohPosition}
+              annotateGear
+              printMode={printMode}
+              containerClassName={`border border-border rounded-lg overflow-hidden w-full ${printMode ? "bg-white" : "bg-[#111]"}`}
+              containerStyle={{ aspectRatio }}
+            />
           </section>
         );
       })}

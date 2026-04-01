@@ -1,6 +1,6 @@
 "use client";
 
-import { StageSVG } from "@/components/editor/stage/StageSVG";
+import { StageCanvas } from "@/components/editor/stage/StageCanvas";
 import { useEventStore } from "@/store/eventStore";
 
 export function StagePlotTab() {
@@ -41,16 +41,17 @@ export function StagePlotTab() {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 border border-border rounded-lg overflow-hidden bg-[#111]">
-        <StageSVG
-          mode="view"
-          annotateGear
-          stageWidth={activeStage.stageWidth}
-          stageDepth={activeStage.stageDepth}
-          fohPosition={activeStage.fohPosition}
-          filterStageId={activeStage.id}
-        />
-      </div>
+      <StageCanvas
+        stageId={activeStage.id}
+        transformKey={`${activeStage.id}-plot`}
+        mode="view"
+        annotateGear
+        stageWidth={activeStage.stageWidth}
+        stageDepth={activeStage.stageDepth}
+        fohPosition={activeStage.fohPosition}
+        filterStageId={activeStage.id}
+        containerClassName="flex-1 min-h-0 border border-border rounded-lg overflow-hidden bg-[#111]"
+      />
     </div>
   );
 }
