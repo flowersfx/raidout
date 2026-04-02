@@ -29,6 +29,7 @@ export default async function EventPage({ params }: Props) {
     artists: event.artists.map((a) => ({
       ...a,
       intakeUpdatedAt: a.intakeUpdatedAt?.toISOString() ?? null,
+      intakeSentAt: a.intakeSentAt?.toISOString() ?? null,
     })),
   };
 

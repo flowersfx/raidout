@@ -322,6 +322,8 @@ export async function saveEventSnapshot(snapshot: {
           soundcheckEnd: a.soundcheckEnd,
           soundcheckMinLength: a.soundcheckMinLength,
           intakeToken: a.intakeToken,
+          intakeSentAt: a.intakeSentAt ? new Date(a.intakeSentAt) : null,
+          intakeUpdatedAt: a.intakeUpdatedAt ? new Date(a.intakeUpdatedAt) : null,
           sortOrder: a.sortOrder,
         },
         update: {
@@ -339,7 +341,8 @@ export async function saveEventSnapshot(snapshot: {
           soundcheckStart: a.soundcheckStart,
           soundcheckEnd: a.soundcheckEnd,
           soundcheckMinLength: a.soundcheckMinLength,
-          // intakeToken and intakeUpdatedAt intentionally omitted — managed by intake flow only
+          intakeSentAt: a.intakeSentAt ? new Date(a.intakeSentAt) : null,
+          intakeUpdatedAt: a.intakeUpdatedAt ? new Date(a.intakeUpdatedAt) : null,
           sortOrder: a.sortOrder,
         },
       });

@@ -85,6 +85,7 @@ model Artist {
   soundcheckEnd       String?
   soundcheckMinLength String?
   intakeToken         String    @unique @default(cuid())
+  intakeSentAt        DateTime?
   intakeUpdatedAt     DateTime?
   sortOrder           Int       @default(0)
 }

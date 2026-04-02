@@ -42,7 +42,14 @@ export function ArtistForm({ artist }: Props) {
     navigator.clipboard.writeText(url).then(() => {
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
+      if (!artist.intakeSentAt) {
+        patch({ intakeSentAt: new Date().toISOString() });
+      }
     });
+  }
+
+  function handleClearIntake() {
+    patch({ intakeSentAt: null, intakeUpdatedAt: null });
   }
 
   function handleDuplicate() {
@@ -51,6 +58,7 @@ export function ArtistForm({ artist }: Props) {
       id: Math.random().toString(36).slice(2, 11),
       name: `${artist.name} (copy)`,
       intakeToken: crypto.randomUUID(),
+      intakeSentAt: null,
       intakeUpdatedAt: null,
       sortOrder: artists.length,
     };
@@ -225,6 +233,11 @@ export function ArtistForm({ artist }: Props) {
           Delete
         </Button>
         <div className="flex-1" />
+        {(artist.intakeSentAt || artist.intakeUpdatedAt) && (
+          <Button size="sm" variant="outline" onClick={handleClearIntake}>
+            Clear intake
+          </Button>
+        )}
         <Button size="sm" variant="outline" onClick={handleCopyIntakeLink}>
           {linkCopied ? "✓ Copied" : "⇗ Copy intake link"}
         </Button>

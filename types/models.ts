@@ -70,6 +70,7 @@ export interface Artist {
   soundcheckEnd: string | null;
   soundcheckMinLength: string | null;
   intakeToken: string;
+  intakeSentAt: string | null; // ISO string — set when intake link is first copied
   intakeUpdatedAt: string | null; // ISO string
   sortOrder: number;
 }

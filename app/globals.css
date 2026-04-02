@@ -190,6 +190,22 @@ input[type="number"].show-spin::-webkit-outer-spin-button {
 }
 @media (prefers-reduced-motion: reduce) { .hint-pulse { animation: none; } }
 
+/* ─── Pop animations — reusable entry/exit for badges and small UI elements ──── */
+@keyframes anim-pop-in {
+  from { opacity: 0; transform: scale(0.7); }
+  60%  { transform: scale(1.1); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes anim-pop-out {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.7); }
+}
+.anim-pop-in  { animation: anim-pop-in  0.15s ease-out forwards; }
+.anim-pop-out { animation: anim-pop-out 0.25s ease-in  forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .anim-pop-in, .anim-pop-out { animation: none; }
+}
+
 /* ─── Focus ──────────────────────────────────────────────────────────────────── */
 :focus-visible {
   outline: 2px solid var(--accent);
