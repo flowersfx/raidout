@@ -206,25 +206,36 @@ export async function duplicateEvent(id: string) {
 /**
  * Full snapshot save — called by auto-save.
  * Atomically syncs all stages, positions, and artists for the event.
+ * Uses optimistic concurrency: clientVersion must match DB version or throws "STALE_DATA".
+ * Returns the new version number on success.
  */
 export async function saveEventSnapshot(snapshot: {
   event: Event;
   stages: Stage[];
   positions: Position[];
   artists: Artist[];
-}) {
-  const { event, stages, positions, artists } = snapshot;
+  clientVersion: number;
+}): Promise<{ version: number }> {
+  const { event, stages, positions, artists, clientVersion } = snapshot;
 
-  await prisma.$transaction(async (tx) => {
-    // Update event meta
-    await tx.event.update({
-      where: { id: event.id },
+  return prisma.$transaction(async (tx) => {
+    // Optimistic concurrency check — increment version only if it matches
+    const result = await tx.event.updateMany({
+      where: { id: event.id, version: clientVersion },
       data: {
         name: event.name,
         date: new Date(event.date),
         venue: event.venue,
+        version: { increment: 1 },
       },
     });
+
+    if (result.count === 0) {
+      throw new Error("STALE_DATA");
+    }
+
+    const updated = await tx.event.findUnique({ where: { id: event.id }, select: { version: true } });
+    const newVersion = updated!.version;
 
     // Sync stages: upsert all, delete removed ones
     const stageIds = stages.map((s) => s.id);
@@ -347,6 +358,8 @@ export async function saveEventSnapshot(snapshot: {
         },
       });
     }
+
+    return { version: newVersion };
   });
 }
 

@@ -8,6 +8,14 @@ export function AutoSaveIndicator() {
   const dirty = useEventStore((s) => s.dirty);
   const saveError = useEventStore((s) => s.saveError);
 
+  if (saveError === "conflict") {
+    return (
+      <span className="text-danger text-xs mono" title="Someone else saved changes — your edits have been reset to the latest version.">
+        ✕ Conflict reset
+      </span>
+    );
+  }
+
   if (saveError) {
     return (
       <span className="text-danger text-xs mono" title={saveError}>

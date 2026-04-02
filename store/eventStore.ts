@@ -28,6 +28,7 @@ interface EventStore {
   stages: Stage[];
   positions: Position[];
   artists: Artist[];
+  version: number;
 
   // Undo state (batch — supports single or multi-delete)
   lastDeletedPositions: DeletedPosition[];
@@ -48,6 +49,7 @@ interface EventStore {
   // Event actions
   setEvent(e: Event): void;
   patchEvent(fields: Partial<Event>): void;
+  setVersion(v: number): void;
 
   // Stage actions
   setStages(s: Stage[]): void;
@@ -97,6 +99,7 @@ export const useEventStore = create<EventStore>((set) => ({
   stages: [],
   positions: [],
   artists: [],
+  version: 1,
   lastDeletedPositions: [],
   lastDeletedArtist: null,
   activeTab: "setup",
@@ -111,12 +114,13 @@ export const useEventStore = create<EventStore>((set) => ({
   saveError: null,
   canvasTransforms: {},
 
-  setEvent: (e) => set({ event: e }),
+  setEvent: (e) => set({ event: e, version: e.version }),
   patchEvent: (fields) =>
     set((s) => ({
       event: s.event ? { ...s.event, ...fields } : s.event,
       dirty: true,
     })),
+  setVersion: (v) => set({ version: v }),
 
   setStages: (stages) =>
     set({ stages, activeStageId: stages[0]?.id ?? null }),

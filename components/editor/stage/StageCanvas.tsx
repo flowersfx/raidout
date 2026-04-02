@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils/cn";
 import { useCanvasTransform } from "@/hooks/useCanvasTransform";
 import { StageSVG } from "./StageSVG";
@@ -17,19 +17,31 @@ const ZOOM_PRESETS = [25, 50, 75, 100, 125, 150, 200, 300];
 
 function FitIcon() {
   return (
-    <svg
-      viewBox="0 0 14 14"
-      width="14"
-      height="14"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {/* four corner arrows pointing inward */}
+    <svg viewBox="0 0 14 14" width="14" height="14" fill="none"
+      stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden="true">
+      <rect x="1" y="1" width="12" height="12" rx="1.5" />
+      <path d="M7 1v3M7 10v3M1 7h3M10 7h3" />
+    </svg>
+  );
+}
+
+function FullscreenIcon() {
+  return (
+    <svg viewBox="0 0 14 14" width="14" height="14" fill="none"
+      stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden="true">
       <path d="M1 5V1h4M9 1h4v4M13 9v4h-4M5 13H1v-4" />
+    </svg>
+  );
+}
+
+function ExitFullscreenIcon() {
+  return (
+    <svg viewBox="0 0 14 14" width="14" height="14" fill="none"
+      stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden="true">
+      <path d="M5 1v4H1M13 5h-4V1M9 13v-4h4M1 9h4v4" />
     </svg>
   );
 }
@@ -42,6 +54,8 @@ interface ZoomControlsProps {
   onZoomOut(): void;  // -1%
   onFit(): void;
   onSetScale(s: number): void;
+  onFullscreen?(): void;
+  isFullscreen?: boolean;
   className?: string;
 }
 
@@ -51,6 +65,8 @@ export function ZoomControls({
   onZoomOut,
   onFit,
   onSetScale,
+  onFullscreen,
+  isFullscreen,
   className,
 }: ZoomControlsProps) {
   const pct = Math.round(scale * 100);
@@ -111,6 +127,12 @@ export function ZoomControls({
       <button onClick={onFit} title="Fit to view" className={btnCls}>
         <FitIcon />
       </button>
+
+      {onFullscreen && (
+        <button onClick={onFullscreen} title={isFullscreen ? "Exit fullscreen" : "Fullscreen"} className={btnCls}>
+          {isFullscreen ? <ExitFullscreenIcon /> : <FullscreenIcon />}
+        </button>
+      )}
     </div>
   );
 }
@@ -154,6 +176,24 @@ export function StageCanvas({
   ...svgProps
 }: StageCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    function onFullscreenChange() {
+      setIsFullscreen(document.fullscreenElement === containerRef.current);
+    }
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+  }, []);
+
+  function handleFullscreen() {
+    if (!containerRef.current) return;
+    if (isFullscreen) {
+      document.exitFullscreen();
+    } else {
+      containerRef.current.requestFullscreen();
+    }
+  }
 
   const stageWidth = extWidth ?? 800;
   const stageDepth = extDepth ?? 400;
@@ -250,6 +290,8 @@ export function StageCanvas({
               onZoomOut={zoomOutStep}
               onFit={fit}
               onSetScale={setScale}
+              onFullscreen={handleFullscreen}
+              isFullscreen={isFullscreen}
             />
           </div>
         </div>

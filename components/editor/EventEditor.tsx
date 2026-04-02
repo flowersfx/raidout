@@ -4,6 +4,7 @@ import { useEffect, Fragment } from "react";
 import Link from "next/link";
 import { useEventStore } from "@/store/eventStore";
 import { useAutoSave } from "@/hooks/useAutoSave";
+import { useEventPoll } from "@/hooks/useEventPoll";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
 import { SetupTab } from "./tabs/SetupTab";
 import { ArtistsTab } from "./tabs/ArtistsTab";
@@ -58,8 +59,9 @@ export function EventEditor({ initial }: Props) {
     setArtists(initial.artists);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Wire up auto-save
+  // Wire up auto-save and background polling
   useAutoSave();
+  useEventPoll();
 
   // Delete key removes selected positions (guard: ignore when focus is in an input)
   useEffect(() => {
@@ -78,8 +80,8 @@ export function EventEditor({ initial }: Props) {
     <div className="flex flex-col h-screen overflow-hidden">
       {/* Top bar */}
       <header className="flex items-center gap-4 px-4 py-2 border-b border-border bg-surface flex-shrink-0">
-        <Link href="/" className="text-xs text-muted hover:text-text transition-colors no-print">
-          <svg viewBox="0 0 6 10" width="6" height="10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 1l-4 4 4 4" /></svg> Events
+        <Link href="/" className="flex items-center gap-1 text-xs text-muted hover:text-text transition-colors no-print">
+          <svg viewBox="0 0 14 14" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M1 6.5L7 1l6 5.5" /><path d="M3 5v7h3V8h2v4h3V5" /></svg> Events
         </Link>
         <span className="text-text font-semibold text-sm truncate flex-1">
           {event?.name ?? initial.event.name}
@@ -89,9 +91,9 @@ export function EventEditor({ initial }: Props) {
           <Link
             href={`/event/${initial.event.id}/share`}
             target="_blank"
-            className="text-xs text-accent hover:text-accent-dim transition-colors"
+            className="flex items-center gap-1 text-xs text-accent hover:text-accent-dim transition-colors"
           >
-            Share <svg viewBox="0 0 6 10" width="6" height="10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 1l4 4-4 4" /></svg>
+            Share <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 2H2v9h9V8M7 1h4v4M11 1 6 6" /></svg>
           </Link>
         </div>
       </header>

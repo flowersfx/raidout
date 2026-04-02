@@ -17,6 +17,7 @@ export interface Event {
   createdAt: string;
   updatedAt: string;
   artistsLastReviewedAt: string | null; // ISO string
+  version: number;
 }
 
 export interface Stage {
