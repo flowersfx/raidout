@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import type { Event, Stage, Position, Artist } from "@/types/models";
 
-type Tab = "setup" | "artists" | "plot" | "foh" | "order";
+type Tab = "setup" | "artists" | "plot" | "profiles" | "order" | "timeline" | "routing";
 
 export interface CanvasTransform {
   panX: number;

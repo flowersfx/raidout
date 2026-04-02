@@ -1,7 +1,7 @@
 "use client";
 
 import { useEventStore } from "@/store/eventStore";
-import { RunningOrderGrid } from "@/components/editor/running-order/RunningOrderGrid";
+import { TimelineBar } from "@/components/editor/running-order/TimelineBar";
 import { sortableStartTime } from "@/lib/utils/time";
 import { getAllSlots } from "@/types/models";
 
@@ -9,7 +9,7 @@ interface Props {
   onArtistClick: (artistId: string) => void;
 }
 
-export function RunningOrderTab({ onArtistClick }: Props) {
+export function TimelineTab({ onArtistClick }: Props) {
   const { artists, positions } = useEventStore();
 
   const allStartTimes = artists.flatMap((a) => getAllSlots(a).map((s) => s.startTime));
@@ -19,7 +19,7 @@ export function RunningOrderTab({ onArtistClick }: Props) {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-6 w-full">
-      <RunningOrderGrid artists={sorted} positions={positions} onArtistClick={onArtistClick} noTimeline />
+      <TimelineBar artists={sorted} positions={positions} onArtistClick={onArtistClick} />
     </div>
   );
 }

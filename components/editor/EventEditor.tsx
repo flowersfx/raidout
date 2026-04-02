@@ -9,8 +9,10 @@ import { AutoSaveIndicator } from "./AutoSaveIndicator";
 import { SetupTab } from "./tabs/SetupTab";
 import { ArtistsTab } from "./tabs/ArtistsTab";
 import { StagePlotTab } from "./tabs/StagePlotTab";
-import { FOHTab } from "./tabs/FOHTab";
+import { ArtistProfilesTab } from "./tabs/ArtistProfilesTab";
 import { RunningOrderTab } from "./tabs/RunningOrderTab";
+import { TimelineTab } from "./tabs/TimelineTab";
+import { SignalRoutingTab } from "./tabs/SignalRoutingTab";
 import { markArtistsTabViewed } from "@/lib/actions/events";
 import { cn } from "@/lib/utils/cn";
 import type { Event, Stage, Position, Artist } from "@/types/models";
@@ -25,16 +27,25 @@ interface Props {
 }
 
 const TABS = [
-  { id: "setup"    as const, label: "Setup",         edit: true  },
-  { id: "artists"  as const, label: "Artists",        edit: true  },
-  { id: "plot"     as const, label: "Stage Plot",     edit: false },
-  { id: "foh"      as const, label: "FOH Summary",    edit: false },
-  { id: "order"    as const, label: "Running Order",  edit: false },
+  { id: "setup"    as const, label: "Setup",            edit: true  },
+  { id: "artists"  as const, label: "Artists",          edit: true  },
+  { id: "plot"     as const, label: "Stage Plot",       edit: false },
+  { id: "profiles" as const, label: "Artist Profiles",  edit: false },
+  { id: "order"    as const, label: "Running Order",    edit: false },
+  { id: "timeline" as const, label: "Timeline",         edit: false },
+  { id: "routing"  as const, label: "Signal Routing",   edit: false },
 ];
 
 export function EventEditor({ initial }: Props) {
   const { setEvent, setStages, setPositions, setArtists, activeTab, setActiveTab, event, artists, patchEvent, removeSelectedPositions } =
     useEventStore();
+
+  function handleArtistClick(artistId: string) {
+    setActiveTab("profiles");
+    setTimeout(() => {
+      document.getElementById(`artist-${artistId}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 50);
+  }
 
   const hasUnreadArtistIntake = artists.some(
     (a) =>
@@ -137,11 +148,13 @@ export function EventEditor({ initial }: Props) {
 
       {/* Tab content */}
       <div className="flex-1 overflow-auto">
-        {activeTab === "setup" && <SetupTab />}
-        {activeTab === "artists" && <ArtistsTab />}
-        {activeTab === "plot" && <StagePlotTab />}
-        {activeTab === "foh" && <FOHTab />}
-        {activeTab === "order" && <RunningOrderTab />}
+        {activeTab === "setup"    && <SetupTab />}
+        {activeTab === "artists"  && <ArtistsTab />}
+        {activeTab === "plot"     && <StagePlotTab />}
+        {activeTab === "profiles" && <ArtistProfilesTab />}
+        {activeTab === "order"    && <RunningOrderTab onArtistClick={handleArtistClick} />}
+        {activeTab === "timeline" && <TimelineTab onArtistClick={handleArtistClick} />}
+        {activeTab === "routing"  && <SignalRoutingTab />}
       </div>
     </div>
   );
