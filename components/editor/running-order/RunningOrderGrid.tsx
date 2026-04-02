@@ -25,6 +25,8 @@ interface FlatSlot {
 interface Row {
   slots: Map<string | null, FlatSlot[]>;
   maxEnd: number;
+  /** Min resolvedEnd of inaugural (first-placed) slots per column. Used to gate new columns joining the row. */
+  rowFirstEnd: number;
   changeovers: Map<string | null, { gap: number; status: ReturnType<typeof changeoverStatus> }>;
 }
 
@@ -50,13 +52,13 @@ export function RunningOrderGrid({ artists, positions, printMode, onArtistClick,
 
   flatSlots.sort((a, b) => a.sortKey - b.sortKey);
 
-  const usedPositionIds = [...new Set(artists.map((a) => a.positionId).filter(Boolean))] as string[];
+  const assignedPositionIds = new Set(artists.map((a) => a.positionId).filter(Boolean));
   const hasUnassigned = artists.some((a) => !a.positionId);
   const columns = [
-    ...usedPositionIds.map((pid) => {
-      const pos = positions.find((p) => p.id === pid);
-      return { id: pid as string | null, label: pos?.name ?? "Unknown", color: pos?.color ?? "#666" };
-    }),
+    // Follow positions sortOrder (already sorted by the server query) rather than artist insertion order
+    ...positions
+      .filter((p) => assignedPositionIds.has(p.id))
+      .map((p) => ({ id: p.id as string | null, label: p.name, color: p.color })),
     ...(hasUnassigned ? [{ id: null as string | null, label: "Unassigned", color: "#666" }] : []),
   ];
 
@@ -70,12 +72,17 @@ export function RunningOrderGrid({ artists, positions, printMode, onArtistClick,
       const lastRow = rows[rows.length - 1];
       const existing = lastRow.slots.get(colId);
       if (existing && existing.some((e) => slot.sortKey < e.resolvedEnd)) {
+        // Same column, overlapping time — stack into this row (does not update rowFirstEnd)
         existing.push(slot);
         lastRow.maxEnd = Math.max(lastRow.maxEnd, slot.resolvedEnd);
         placed = true;
-      } else if (!existing && slot.sortKey < lastRow.maxEnd) {
+      } else if (!existing && slot.sortKey < lastRow.rowFirstEnd) {
+        // New column — only join if slot starts before any inaugural slot in this row ends.
+        // This prevents a late-starting act from being pulled into a row just because a
+        // long-running act (e.g. 21:00–04:00) keeps maxEnd artificially high.
         lastRow.slots.set(colId, [slot]);
         lastRow.maxEnd = Math.max(lastRow.maxEnd, slot.resolvedEnd);
+        lastRow.rowFirstEnd = Math.min(lastRow.rowFirstEnd, slot.resolvedEnd);
         placed = true;
       }
     }
@@ -86,7 +93,7 @@ export function RunningOrderGrid({ artists, positions, printMode, onArtistClick,
         const gap = slot.sortKey - prev.end;
         changeovers.set(colId, { gap, status: changeoverStatus(gap) });
       }
-      rows.push({ slots: new Map([[colId, [slot]]]), maxEnd: slot.resolvedEnd, changeovers });
+      rows.push({ slots: new Map([[colId, [slot]]]), maxEnd: slot.resolvedEnd, rowFirstEnd: slot.resolvedEnd, changeovers });
     }
     lastEndPerPosition.set(colId, { end: slot.resolvedEnd });
   }
