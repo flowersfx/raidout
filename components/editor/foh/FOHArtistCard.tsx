@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils/cn";
 import { getAllSlots, type Artist, type Position } from "@/types/models";
@@ -9,6 +9,8 @@ interface Props {
   artist: Artist;
   position?: Position;
   printMode?: boolean;
+  focused?: boolean;
+  onSelect?: (id: string | undefined) => void;
 }
 
 function DataBlock({ label, value }: { label: string; value: string }) {
@@ -21,12 +23,20 @@ function DataBlock({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function FOHArtistCard({ artist, position, printMode = false }: Props) {
+export function FOHArtistCard({ artist, position, printMode = false, focused = false, onSelect }: Props) {
   const [expanded, setExpanded] = useState(false);
   const isExpanded = printMode || expanded;
 
+  useEffect(() => {
+    if (focused) setExpanded(true);
+  }, [focused]);
+
   return (
-    <div id={`artist-${artist.id}`} className="border border-border rounded-lg overflow-hidden bg-surface">
+    <div
+      id={`artist-${artist.id}`}
+      className="rounded-lg overflow-hidden bg-surface transition-colors"
+      style={{ border: focused && position && !printMode ? `2px solid ${position.color}` : "1px solid var(--border)" }}
+    >
       {/* Card header — click to expand/collapse */}
       <button
         className={cn(
@@ -34,7 +44,11 @@ export function FOHArtistCard({ artist, position, printMode = false }: Props) {
           isExpanded && "border-b border-border"
         )}
         style={position ? { borderLeftColor: position.color, borderLeftWidth: 3 } : undefined}
-        onClick={() => { if (!printMode) setExpanded((v) => !v); }}
+        onClick={() => {
+          if (printMode) return;
+          setExpanded((v) => !v);
+          onSelect?.(focused ? undefined : artist.id);
+        }}
       >
         <div className="flex-1">
           <p className="font-bold text-text">{artist.name}</p>

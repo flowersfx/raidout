@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, Fragment } from "react";
+import { useEffect, useState, Fragment } from "react";
 import Link from "next/link";
 import { useEventStore } from "@/store/eventStore";
 import { useAutoSave } from "@/hooks/useAutoSave";
@@ -40,7 +40,10 @@ export function EventEditor({ initial }: Props) {
   const { setEvent, setStages, setPositions, setArtists, activeTab, setActiveTab, event, artists, patchEvent, removeSelectedPositions } =
     useEventStore();
 
+  const [focusArtistId, setFocusArtistId] = useState<string | undefined>();
+
   function handleArtistClick(artistId: string) {
+    setFocusArtistId(artistId);
     setActiveTab("profiles");
     setTimeout(() => {
       document.getElementById(`artist-${artistId}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -151,7 +154,7 @@ export function EventEditor({ initial }: Props) {
         {activeTab === "setup"    && <SetupTab />}
         {activeTab === "artists"  && <ArtistsTab />}
         {activeTab === "plot"     && <StagePlotTab />}
-        {activeTab === "profiles" && <ArtistProfilesTab />}
+        {activeTab === "profiles" && <ArtistProfilesTab focusArtistId={focusArtistId} onSelectArtist={setFocusArtistId} />}
         {activeTab === "order"    && <RunningOrderTab onArtistClick={handleArtistClick} />}
         {activeTab === "timeline" && <TimelineTab onArtistClick={handleArtistClick} />}
         {activeTab === "routing"  && <SignalRoutingTab />}

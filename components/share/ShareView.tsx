@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { StageCanvas } from "@/components/editor/stage/StageCanvas";
 import { FOHArtistCard } from "@/components/editor/foh/FOHArtistCard";
 import { MasterInputList } from "@/components/editor/foh/MasterInputList";
@@ -40,6 +40,19 @@ function stageAspectRatio(stage: Stage): number {
 
 export function ShareView({ event, stages, positions, artists, printMode = false }: Props) {
   const [activeTab, setActiveTab] = useState<ShareTabId>("profiles");
+  const [focusArtistId, setFocusArtistId] = useState<string | undefined>();
+
+  // When printMode is active, apply the print-mode CSS class to <html> (so all theme
+  // tokens flip to light) and auto-trigger the browser print dialog.
+  useEffect(() => {
+    if (!printMode) return;
+    document.documentElement.classList.add("print-mode");
+    const t = setTimeout(() => window.print(), 400);
+    return () => {
+      document.documentElement.classList.remove("print-mode");
+      clearTimeout(t);
+    };
+  }, [printMode]);
 
   const allStartTimes = artists.flatMap((a) => getAllSlots(a).map((s) => s.startTime));
   const sorted = [...artists].sort((a, b) =>
@@ -47,6 +60,7 @@ export function ShareView({ event, stages, positions, artists, printMode = false
   );
 
   function handleArtistClick(artistId: string) {
+    setFocusArtistId(artistId);
     setActiveTab("profiles");
     setTimeout(() => {
       document.getElementById(`artist-${artistId}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -158,6 +172,8 @@ export function ShareView({ event, stages, positions, artists, printMode = false
                 artist={artist}
                 position={positions.find((p) => p.id === artist.positionId)}
                 printMode={printMode}
+                focused={artist.id === focusArtistId}
+                onSelect={setFocusArtistId}
               />
             ))}
           </div>

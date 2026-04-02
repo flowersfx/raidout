@@ -5,7 +5,7 @@ import { FOHArtistCard } from "@/components/editor/foh/FOHArtistCard";
 import { sortableStartTime } from "@/lib/utils/time";
 import { getAllSlots } from "@/types/models";
 
-export function ArtistProfilesTab() {
+export function ArtistProfilesTab({ focusArtistId, onSelectArtist }: { focusArtistId?: string; onSelectArtist?: (id: string | undefined) => void }) {
   const { artists, positions } = useEventStore();
 
   const allStartTimes = artists.flatMap((a) => getAllSlots(a).map((s) => s.startTime));
@@ -20,6 +20,8 @@ export function ArtistProfilesTab() {
           key={artist.id}
           artist={artist}
           position={positions.find((p) => p.id === artist.positionId)}
+          focused={artist.id === focusArtistId}
+          onSelect={onSelectArtist}
         />
       ))}
       {sorted.length === 0 && (
