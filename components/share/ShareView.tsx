@@ -56,24 +56,6 @@ export function ShareView({ event, stages, positions, artists, printMode = false
   return (
     <div className="py-8 flex flex-col gap-10">
 
-      {/* Event header */}
-      <header className="max-w-6xl mx-auto w-full px-6 border-b border-border pb-6">
-        <h1 className="text-2xl font-bold text-text">{event.name}</h1>
-        <p className="text-muted mt-1">
-          {new Date(event.date).toLocaleDateString("en-GB", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })}{" "}
-          &bull; {event.venue}
-        </p>
-        <p className="text-xs text-dim mono mt-2">
-          {stages.length} stage{stages.length > 1 ? "s" : ""} &bull;{" "}
-          {positions.length} positions &bull; {artists.length} artists
-        </p>
-      </header>
-
       {/* Stage plots — always above tabs, scroll away naturally */}
       {stages.map((stage) => {
         const stagePositions = positions.filter((p) => p.stageId === stage.id);
