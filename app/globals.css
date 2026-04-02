@@ -106,6 +106,10 @@ body {
   .no-print {
     display: none !important;
   }
+
+  .print-only {
+    display: block !important;
+  }
 }
 
 /* ─── Number inputs: hide spinners by default ───────────────────────────────── */
