@@ -1,9 +1,14 @@
+"use client";
+
+import { useState } from "react";
 import { Badge } from "@/components/ui/Badge";
+import { cn } from "@/lib/utils/cn";
 import { getAllSlots, type Artist, type Position } from "@/types/models";
 
 interface Props {
   artist: Artist;
   position?: Position;
+  printMode?: boolean;
 }
 
 function DataBlock({ label, value }: { label: string; value: string }) {
@@ -16,13 +21,20 @@ function DataBlock({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function FOHArtistCard({ artist, position }: Props) {
+export function FOHArtistCard({ artist, position, printMode = false }: Props) {
+  const [expanded, setExpanded] = useState(false);
+  const isExpanded = printMode || expanded;
+
   return (
-    <div className="border border-border rounded-lg overflow-hidden bg-surface">
-      {/* Card header */}
-      <div
-        className="px-4 py-3 border-b border-border flex items-center gap-3"
+    <div id={`artist-${artist.id}`} className="border border-border rounded-lg overflow-hidden bg-surface">
+      {/* Card header — click to expand/collapse */}
+      <button
+        className={cn(
+          "w-full px-4 py-3 flex items-center gap-3 text-left",
+          isExpanded && "border-b border-border"
+        )}
         style={position ? { borderLeftColor: position.color, borderLeftWidth: 3 } : undefined}
+        onClick={() => { if (!printMode) setExpanded((v) => !v); }}
       >
         <div className="flex-1">
           <p className="font-bold text-text">{artist.name}</p>
@@ -34,17 +46,29 @@ export function FOHArtistCard({ artist, position }: Props) {
           </p>
         </div>
         {position && <Badge label={position.name} color={position.color} />}
-      </div>
+        {!printMode && (
+          <svg
+            viewBox="0 0 6 10" width="6" height="10"
+            fill="none" stroke="currentColor" strokeWidth="1.5"
+            strokeLinecap="round" strokeLinejoin="round"
+            className={cn("text-dim flex-shrink-0 transition-transform", isExpanded && "rotate-90")}
+          >
+            <path d="M1 1l4 4-4 4" />
+          </svg>
+        )}
+      </button>
 
-      {/* Body */}
-      <div className="p-4 grid gap-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <DataBlock label="Gear they bring" value={artist.gearBrings} />
-          <DataBlock label="Venue must provide" value={artist.venueNeeds} />
+      {/* Body — only when expanded */}
+      {isExpanded && (
+        <div className="p-4 grid gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <DataBlock label="Gear they bring" value={artist.gearBrings} />
+            <DataBlock label="Venue must provide" value={artist.venueNeeds} />
+          </div>
+          <DataBlock label="Signal routing" value={artist.routing} />
+          <DataBlock label="Notes" value={artist.notes} />
         </div>
-        <DataBlock label="Signal routing" value={artist.routing} />
-        <DataBlock label="Notes" value={artist.notes} />
-      </div>
+      )}
     </div>
   );
 }

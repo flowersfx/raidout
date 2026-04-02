@@ -2,10 +2,13 @@
 
 import { parseHHMM, resolveEndTime, sortableStartTime } from "@/lib/utils/time";
 import { getAllSlots, type Artist, type Position } from "@/types/models";
+import { cn } from "@/lib/utils/cn";
 
 interface Props {
   artists: Artist[];
   positions: Position[];
+  printMode?: boolean;
+  onArtistClick?: (artistId: string) => void;
 }
 
 const SUB_LANE_HEIGHT = 22; // px per sub-row
@@ -51,7 +54,7 @@ function packSubLanes(slots: ResolvedSlot[]): number[] {
   return result;
 }
 
-export function TimelineBar({ artists, positions }: Props) {
+export function TimelineBar({ artists, positions, printMode, onArtistClick }: Props) {
   if (artists.length === 0) return null;
 
   // Collect all start times across all slots for midnight heuristic
@@ -137,7 +140,13 @@ export function TimelineBar({ artists, positions }: Props) {
   const totalHeight = currentTop;
 
   return (
-    <div className="relative bg-black rounded-lg overflow-hidden border border-border" style={{ height: totalHeight }}>
+    <div
+      className={cn(
+        "relative rounded-lg overflow-hidden border border-border",
+        printMode ? "bg-white" : "bg-black"
+      )}
+      style={{ height: totalHeight }}
+    >
       {/* Hour ticks — full height */}
       {ticks.map((h) => {
         const pct = toPercent(h * 60);
@@ -147,7 +156,7 @@ export function TimelineBar({ artists, positions }: Props) {
             className="absolute top-0 border-l border-border/50"
             style={{ left: `${pct}%`, height: totalHeight }}
           >
-            <span className="absolute top-0.5 left-1 text-xs text-dim mono leading-none">
+            <span className={cn("absolute top-0.5 left-1 text-xs mono leading-none", printMode ? "text-muted" : "text-dim")}>
               {String(h % 24).padStart(2, "0")}:00
             </span>
           </div>
@@ -195,7 +204,10 @@ export function TimelineBar({ artists, positions }: Props) {
         return (
           <div
             key={`${artist.id}-${slotIndex}`}
-            className="absolute rounded flex items-center justify-center overflow-hidden"
+            className={cn(
+              "absolute rounded flex items-center justify-center overflow-hidden",
+              onArtistClick && "cursor-pointer"
+            )}
             style={{
               left: `${left}%`,
               width: `${Math.max(width, 0.5)}%`,
@@ -205,8 +217,9 @@ export function TimelineBar({ artists, positions }: Props) {
               borderLeft: `2px solid ${color}`,
             }}
             title={`${artist.name} · ${slot.startTime}–${slot.endTime}`}
+            onClick={() => onArtistClick?.(artist.id)}
           >
-            <span className="text-xs font-medium text-text truncate px-1">
+            <span className={cn("text-xs font-medium truncate px-1", printMode ? "text-black" : "text-text")}>
               {artist.name}
             </span>
           </div>

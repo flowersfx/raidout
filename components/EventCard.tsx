@@ -145,7 +145,7 @@ export function EventCard({ id, name, date, venue, stageName, hasUnreadIntake, o
                     {formattedDate} &bull; {venue} &bull; {stageName}
                   </p>
                 </div>
-                <span className="text-dim text-xs mono">{isNavigating ? "…" : "→"}</span>
+                <span className="text-dim text-xs mono">{isNavigating ? "…" : <svg viewBox="0 0 6 10" width="6" height="10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 1l4 4-4 4" /></svg>}</span>
               </button>
 
               <div className="flex flex-col gap-2">
@@ -175,7 +175,7 @@ export function EventCard({ id, name, date, venue, stageName, hasUnreadIntake, o
                   title="Export event as JSON"
                   className="flex-1 inline-flex items-center justify-center px-3 text-xs font-medium text-muted border border-border rounded-lg hover:text-text hover:bg-raised transition-colors"
                 >
-                  ↓ Export
+                  <svg viewBox="0 0 10 6" width="10" height="6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 1l4 4 4-4" /></svg> Export
                 </a>
               </div>
             </div>

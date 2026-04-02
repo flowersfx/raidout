@@ -15,7 +15,7 @@ export function MasterInputList({ artists, positions }: Props) {
       positionName: position?.name ?? "—",
       positionColor: position?.color,
     }));
-  });
+  }).sort((a, b) => a.positionName.localeCompare(b.positionName));
 
   if (rows.length === 0) {
     return (
@@ -31,7 +31,7 @@ export function MasterInputList({ artists, positions }: Props) {
         <thead>
           <tr className="border-b border-border text-left">
             <th className="py-2 pr-4 text-xs text-muted uppercase tracking-wider font-medium mono w-24">
-              Channel
+              Type
             </th>
             <th className="py-2 pr-4 text-xs text-muted uppercase tracking-wider font-medium">
               Description

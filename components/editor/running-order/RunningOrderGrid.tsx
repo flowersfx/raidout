@@ -6,6 +6,10 @@ import { cn } from "@/lib/utils/cn";
 interface Props {
   artists: Artist[];
   positions: Position[];
+  printMode?: boolean;
+  onArtistClick?: (artistId: string) => void;
+  /** When true, suppresses the embedded TimelineBar (used in ShareView where timeline is its own tab) */
+  noTimeline?: boolean;
 }
 
 interface FlatSlot {
@@ -24,7 +28,7 @@ interface Row {
   changeovers: Map<string | null, { gap: number; status: ReturnType<typeof changeoverStatus> }>;
 }
 
-export function RunningOrderGrid({ artists, positions }: Props) {
+export function RunningOrderGrid({ artists, positions, printMode, onArtistClick, noTimeline }: Props) {
   const allStartTimes = artists.flatMap((a) => getAllSlots(a).map((s) => s.startTime));
 
   const flatSlots: FlatSlot[] = artists.flatMap((a) =>
@@ -97,10 +101,12 @@ export function RunningOrderGrid({ artists, positions }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-xs text-muted uppercase tracking-wider mb-3">Timeline</h2>
-        <TimelineBar artists={sorted} positions={positions} />
-      </div>
+      {!noTimeline && (
+        <div>
+          <h2 className="text-xs text-muted uppercase tracking-wider mb-3">Timeline</h2>
+          <TimelineBar artists={sorted} positions={positions} printMode={printMode} onArtistClick={onArtistClick} />
+        </div>
+      )}
 
       <div>
         <h2 className="text-xs text-muted uppercase tracking-wider mb-3">Running Order</h2>
@@ -119,53 +125,57 @@ export function RunningOrderGrid({ artists, positions }: Props) {
 
         {/* Rows */}
         {rows.map((row, ri) => (
-          <div key={ri}>
-            {row.changeovers.size > 0 && (
+            <div key={ri}>
+              {row.changeovers.size > 0 && (
+                <div
+                  className="grid gap-3 py-0.5"
+                  style={{ gridTemplateColumns: `2rem repeat(${columns.length}, 1fr)` }}
+                >
+                  <div />
+                  {columns.map((col) => {
+                    const co = row.changeovers.get(col.id);
+                    if (!co) return <div key={col.id ?? "__u"} />;
+                    return (
+                      <div key={col.id ?? "__u"} className="flex items-center">
+                        <span className={cn("text-xs mono",
+                          co.status === "overlap" ? "text-danger" :
+                          co.status === "tight" ? "text-warn" : "text-ok"
+                        )}>
+                          {formatGap(co.gap)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               <div
-                className="grid gap-3 py-0.5"
+                className="grid gap-3 border-b border-border/30 py-2 items-start"
                 style={{ gridTemplateColumns: `2rem repeat(${columns.length}, 1fr)` }}
               >
-                <div />
+                <span className="text-dim mono text-xs text-right self-center">{ri + 1}</span>
                 {columns.map((col) => {
-                  const co = row.changeovers.get(col.id);
-                  if (!co) return <div key={col.id ?? "__u"} />;
+                  const slots = row.slots.get(col.id);
+                  if (!slots || slots.length === 0) return <div key={col.id ?? "__u"} />;
                   return (
-                    <div key={col.id ?? "__u"} className="flex items-center">
-                      <span className={cn("text-xs mono",
-                        co.status === "overlap" ? "text-danger" :
-                        co.status === "tight" ? "text-warn" : "text-ok"
-                      )}>
-                        {formatGap(co.gap)}
-                      </span>
+                    <div key={col.id ?? "__u"} className="flex gap-2 min-w-0">
+                      <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: col.color }} />
+                      <div className="flex-1 min-w-0 flex flex-col gap-1">
+                        {slots.map((slot, si) => (
+                          <div
+                            key={si}
+                            className={cn("min-w-0", onArtistClick && "cursor-pointer")}
+                            onClick={() => onArtistClick?.(slot.artistId)}
+                          >
+                            <p className="font-semibold text-sm text-text truncate">{slot.artistName}</p>
+                            <span className="mono text-xs text-muted">{slot.startTime} – {slot.endTime}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   );
                 })}
               </div>
-            )}
-            <div
-              className="grid gap-3 border-b border-border/30 py-2"
-              style={{ gridTemplateColumns: `2rem repeat(${columns.length}, 1fr)` }}
-            >
-              <span className="text-dim mono text-xs text-right self-center">{ri + 1}</span>
-              {columns.map((col) => {
-                const slots = row.slots.get(col.id);
-                if (!slots || slots.length === 0) return <div key={col.id ?? "__u"} />;
-                return (
-                  <div key={col.id ?? "__u"} className="flex gap-2 min-w-0">
-                    <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: col.color }} />
-                    <div className="flex-1 min-w-0 flex flex-col gap-1">
-                      {slots.map((slot, si) => (
-                        <div key={si} className="min-w-0">
-                          <p className="font-semibold text-sm text-text truncate">{slot.artistName}</p>
-                          <span className="mono text-xs text-muted">{slot.startTime} – {slot.endTime}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
             </div>
-          </div>
         ))}
       </div>
     </div>

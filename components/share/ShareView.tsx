@@ -1,14 +1,26 @@
 "use client";
 
+import { useState } from "react";
 import { StageCanvas } from "@/components/editor/stage/StageCanvas";
 import { FOHArtistCard } from "@/components/editor/foh/FOHArtistCard";
 import { MasterInputList } from "@/components/editor/foh/MasterInputList";
 import { RunningOrderGrid } from "@/components/editor/running-order/RunningOrderGrid";
+import { TimelineBar } from "@/components/editor/running-order/TimelineBar";
 import { sortableStartTime } from "@/lib/utils/time";
 import { getAllSlots, type Event, type Stage, type Position, type Artist } from "@/types/models";
+import { cn } from "@/lib/utils/cn";
 
 // FOH_LABEL_HEIGHT must match StageSVG constant
 const FOH_LABEL_HEIGHT = 24;
+
+const SHARE_TABS = [
+  { id: "profiles"  as const, label: "Artist Profiles" },
+  { id: "timeline"  as const, label: "Timeline" },
+  { id: "order"     as const, label: "Running Order" },
+  { id: "routing"   as const, label: "Signal Routing" },
+] as const;
+
+type ShareTabId = typeof SHARE_TABS[number]["id"];
 
 interface Props {
   event: Event;
@@ -27,10 +39,19 @@ function stageAspectRatio(stage: Stage): number {
 }
 
 export function ShareView({ event, stages, positions, artists, printMode = false }: Props) {
+  const [activeTab, setActiveTab] = useState<ShareTabId>("profiles");
+
   const allStartTimes = artists.flatMap((a) => getAllSlots(a).map((s) => s.startTime));
   const sorted = [...artists].sort((a, b) =>
     sortableStartTime(a.startTime, allStartTimes) - sortableStartTime(b.startTime, allStartTimes)
   );
+
+  function handleArtistClick(artistId: string) {
+    setActiveTab("profiles");
+    setTimeout(() => {
+      document.getElementById(`artist-${artistId}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 50);
+  }
 
   return (
     <div className="py-8 flex flex-col gap-10">
@@ -53,7 +74,7 @@ export function ShareView({ event, stages, positions, artists, printMode = false
         </p>
       </header>
 
-      {/* One stage plot section per stage */}
+      {/* Stage plots — always above tabs, scroll away naturally */}
       {stages.map((stage) => {
         const stagePositions = positions.filter((p) => p.stageId === stage.id);
         const aspectRatio = stageAspectRatio(stage);
@@ -77,34 +98,81 @@ export function ShareView({ event, stages, positions, artists, printMode = false
         );
       })}
 
-      {/* Running order — spans all stages */}
-      <section className="max-w-6xl mx-auto w-full px-6">
-        <RunningOrderGrid artists={sorted} positions={positions} />
-      </section>
-
-      {/* FOH artist cards — spans all stages */}
-      <section className="max-w-6xl mx-auto w-full px-6">
-        <h2 className="text-xs text-muted uppercase tracking-wider mb-4">Artist Profiles</h2>
-        <div className="flex flex-col gap-4">
-          {sorted.map((artist) => (
-            <FOHArtistCard
-              key={artist.id}
-              artist={artist}
-              position={positions.find((p) => p.id === artist.positionId)}
-            />
-          ))}
+      {/* Sticky tab bar — hidden in printMode */}
+      {!printMode && (
+        <div className="sticky top-0 z-10 bg-bg border-b border-border -mb-4">
+          <div className="max-w-6xl mx-auto px-6 flex">
+            {SHARE_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
+                  activeTab === tab.id
+                    ? "border-text/40 text-text"
+                    : "border-transparent text-muted hover:text-text"
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </section>
+      )}
 
-      {/* Master input list — spans all stages */}
-      <section className="max-w-6xl mx-auto w-full px-6">
-        <h2 className="text-xs text-muted uppercase tracking-wider mb-4">
-          Master Input / Channel List
-        </h2>
-        <div className="bg-surface border border-border rounded-lg p-4">
-          <MasterInputList artists={sorted} positions={positions} />
-        </div>
-      </section>
+      {/* Timeline */}
+      {(printMode || activeTab === "timeline") && (
+        <section className="max-w-6xl mx-auto w-full px-6">
+          {printMode && <h2 className="text-xs text-muted uppercase tracking-wider mb-3">Timeline</h2>}
+          <TimelineBar
+            artists={sorted}
+            positions={positions}
+            printMode={printMode}
+            onArtistClick={handleArtistClick}
+          />
+        </section>
+      )}
+
+      {/* Running Order */}
+      {(printMode || activeTab === "order") && (
+        <section className="max-w-6xl mx-auto w-full px-6">
+          {printMode && <h2 className="text-xs text-muted uppercase tracking-wider mb-3">Running Order</h2>}
+          <RunningOrderGrid
+            artists={sorted}
+            positions={positions}
+            printMode={printMode}
+            onArtistClick={handleArtistClick}
+            noTimeline
+          />
+        </section>
+      )}
+
+      {/* Artist Profiles */}
+      {(printMode || activeTab === "profiles") && (
+        <section className="max-w-6xl mx-auto w-full px-6">
+          {printMode && <h2 className="text-xs text-muted uppercase tracking-wider mb-4">Artist Profiles</h2>}
+          <div className="flex flex-col gap-4">
+            {sorted.map((artist) => (
+              <FOHArtistCard
+                key={artist.id}
+                artist={artist}
+                position={positions.find((p) => p.id === artist.positionId)}
+                printMode={printMode}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Signal Routing */}
+      {(printMode || activeTab === "routing") && (
+        <section className="max-w-6xl mx-auto w-full px-6">
+          {printMode && <h2 className="text-xs text-muted uppercase tracking-wider mb-4">Signal Routing</h2>}
+          <div className="bg-surface border border-border rounded-lg p-4">
+            <MasterInputList artists={sorted} positions={positions} />
+          </div>
+        </section>
+      )}
 
     </div>
   );

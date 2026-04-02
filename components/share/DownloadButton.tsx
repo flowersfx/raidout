@@ -31,7 +31,7 @@ export function DownloadButton({ eventId }: Props) {
 
   return (
     <Button onClick={handleDownload} disabled={loading}>
-      {loading ? "Generating PDF…" : "↓ Download PDF"}
+      {loading ? "Generating PDF…" : <><svg viewBox="0 0 10 6" width="10" height="6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 1l4 4 4-4" /></svg> Download PDF</>}
     </Button>
   );
 }

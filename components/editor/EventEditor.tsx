@@ -79,7 +79,7 @@ export function EventEditor({ initial }: Props) {
       {/* Top bar */}
       <header className="flex items-center gap-4 px-4 py-2 border-b border-border bg-surface flex-shrink-0">
         <Link href="/" className="text-xs text-muted hover:text-text transition-colors no-print">
-          ← Events
+          <svg viewBox="0 0 6 10" width="6" height="10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 1l-4 4 4 4" /></svg> Events
         </Link>
         <span className="text-text font-semibold text-sm truncate flex-1">
           {event?.name ?? initial.event.name}
@@ -91,7 +91,7 @@ export function EventEditor({ initial }: Props) {
             target="_blank"
             className="text-xs text-accent hover:text-accent-dim transition-colors"
           >
-            Share →
+            Share <svg viewBox="0 0 6 10" width="6" height="10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 1l4 4-4 4" /></svg>
           </Link>
         </div>
       </header>
