@@ -38,8 +38,8 @@ function FitIcon() {
 
 interface ZoomControlsProps {
   scale: number;
-  onZoomIn(): void;
-  onZoomOut(): void;
+  onZoomIn(): void;   // +1%
+  onZoomOut(): void;  // -1%
   onFit(): void;
   onSetScale(s: number): void;
   className?: string;
@@ -176,8 +176,8 @@ export function StageCanvas({
     isSpaceHeld,
     isPanning,
     startPan,
-    zoomIn,
-    zoomOut,
+    zoomInStep,
+    zoomOutStep,
     fit,
     setScale,
   } = useCanvasTransform(containerRef, {
@@ -246,8 +246,8 @@ export function StageCanvas({
           <div className="ml-auto">
             <ZoomControls
               scale={scale}
-              onZoomIn={zoomIn}
-              onZoomOut={zoomOut}
+              onZoomIn={zoomInStep}
+              onZoomOut={zoomOutStep}
               onFit={fit}
               onSetScale={setScale}
             />

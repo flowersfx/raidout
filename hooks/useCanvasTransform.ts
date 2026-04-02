@@ -153,6 +153,21 @@ export function useCanvasTransform(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zoomAt]);
 
+  // ±1 percentage point, centred on container midpoint
+  const zoomInStep = useCallback(() => {
+    const { scale } = freshTransform();
+    const { width, height } = containerSizeRef.current;
+    zoomAt(Math.round(scale * 100) / 100 + 0.01, width / 2, height / 2);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoomAt]);
+
+  const zoomOutStep = useCallback(() => {
+    const { scale } = freshTransform();
+    const { width, height } = containerSizeRef.current;
+    zoomAt(Math.round(scale * 100) / 100 - 0.01, width / 2, height / 2);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoomAt]);
+
   const fit = useCallback(() => {
     setCanvasTransform(stageId, computeFit());
   }, [stageId, setCanvasTransform, computeFit]);
@@ -322,6 +337,8 @@ export function useCanvasTransform(
     startPan,
     zoomIn,
     zoomOut,
+    zoomInStep,
+    zoomOutStep,
     fit,
     setScale,
   };
