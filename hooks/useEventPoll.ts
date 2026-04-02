@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useEventStore } from "@/store/eventStore";
-import { getEvent } from "@/lib/actions/events";
+import { getSerializedEvent } from "@/lib/actions/events";
 
 const POLL_INTERVAL_MS = 60_000;
 
@@ -21,12 +21,12 @@ export function useEventPoll() {
           return;
         }
 
-        const fresh = await getEvent(event!.id);
-        if (fresh && fresh.updatedAt > event!.updatedAt) {
-          setEvent(fresh as Parameters<typeof setEvent>[0]);
-          setStages(fresh.stages as Parameters<typeof setStages>[0]);
-          setPositions(fresh.positions as Parameters<typeof setPositions>[0]);
-          setArtists(fresh.artists as Parameters<typeof setArtists>[0]);
+        const fresh = await getSerializedEvent(event!.id);
+        if (fresh && fresh.event.updatedAt > event!.updatedAt) {
+          setEvent(fresh.event);
+          setStages(fresh.stages);
+          setPositions(fresh.positions);
+          setArtists(fresh.artists);
         }
 
         schedule();

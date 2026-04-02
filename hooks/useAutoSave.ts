@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useEventStore } from "@/store/eventStore";
-import { saveEventSnapshot, getEvent } from "@/lib/actions/events";
+import { saveEventSnapshot, getSerializedEvent } from "@/lib/actions/events";
 
 const DEBOUNCE_MS = 800;
 
@@ -27,12 +27,12 @@ export function useAutoSave() {
         const msg = err instanceof Error ? err.message : "Save failed";
         if (msg === "STALE_DATA") {
           setSaveError("conflict");
-          const fresh = await getEvent(event.id);
+          const fresh = await getSerializedEvent(event.id);
           if (fresh) {
-            setEvent(fresh as Parameters<typeof setEvent>[0]);
-            setStages(fresh.stages as Parameters<typeof setStages>[0]);
-            setPositions(fresh.positions as Parameters<typeof setPositions>[0]);
-            setArtists(fresh.artists as Parameters<typeof setArtists>[0]);
+            setEvent(fresh.event);
+            setStages(fresh.stages);
+            setPositions(fresh.positions);
+            setArtists(fresh.artists);
           }
         } else {
           setSaveError(msg);

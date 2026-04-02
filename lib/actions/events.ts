@@ -45,6 +45,24 @@ export async function getEvent(id: string) {
   });
 }
 
+/** Serialized version of getEvent for use in client hooks — all Date fields become ISO strings. */
+export async function getSerializedEvent(id: string) {
+  const event = await getEvent(id);
+  if (!event) return null;
+  return {
+    event: {
+      ...event,
+      date: event.date.toISOString(),
+      createdAt: event.createdAt.toISOString(),
+      updatedAt: event.updatedAt.toISOString(),
+      artistsLastReviewedAt: event.artistsLastReviewedAt?.toISOString() ?? null,
+    } as Event,
+    stages: event.stages as Stage[],
+    positions: event.positions as Position[],
+    artists: event.artists as Artist[],
+  };
+}
+
 export async function getEventByShareToken(token: string) {
   return prisma.event.findUnique({
     where: { shareToken: token },
