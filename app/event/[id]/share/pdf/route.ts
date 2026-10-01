@@ -4,6 +4,10 @@ import { getEvent } from "@/lib/actions/events";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60; // seconds — PDF generation needs time on Vercel
 
+// Must match the installed @sparticuz/chromium-min major (Vercel runs x64)
+const CHROMIUM_PACK_URL =
+  "https://github.com/Sparticuz/chromium/releases/download/v153.0.0/chromium-v153.0.0-pack.x64.tar";
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -27,9 +31,7 @@ export async function GET(
       const puppeteerCore = await import("puppeteer-core");
       browser = await puppeteerCore.default.launch({
         args: chromium.default.args,
-        executablePath: await chromium.default.executablePath(
-          "https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar"
-        ),
+        executablePath: await chromium.default.executablePath(CHROMIUM_PACK_URL),
         headless: true,
       });
     } else {
