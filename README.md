@@ -5,7 +5,7 @@ Stage tech rider consolidation tool for nightclub and event managers. Collect in
 ## Tech Stack
 
 - **Next.js 16** (App Router, Turbopack)
-- **SQLite** via Prisma ORM
+- **PostgreSQL** (Neon, AWS eu-central-1) via Prisma ORM
 - **Zustand** for client state
 - **Tailwind CSS** for styling
 - **@dnd-kit** for drag-and-drop
@@ -60,14 +60,17 @@ prisma/                 Schema + migrations + seed
 - **Running order** — multi-lane timeline (one lane per position) + multi-column grid with changeover indicators
 - **FOH summary** — per-artist cards + consolidated master input list
 - **Shareable link** — read-only view via share token, no auth required
-- **Auto-save** — debounced snapshot save to SQLite
+- **Auto-save** — debounced snapshot save to Postgres
 
 ## Deployment
 
-See SPEC.md for full deployment notes. Current database is SQLite (file-based) — for production, switch the Prisma datasource to Postgres with a one-line change.
+Hosted on Vercel with functions pinned to `fra1` (Frankfurt) in `vercel.json`, next to the Neon database in `aws-eu-central-1`. Keep the two in the same region: every query is a round trip from the function. See SPEC.md for more deployment notes.
 
 ## Environment Variables
 
 ```
-DATABASE_URL="file:./dev.db"
+# Pooled connection (host contains "-pooler"), used by the app at runtime
+DATABASE_URL="postgresql://USER:PASSWORD@ep-xxx-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require&pgbouncer=true&connect_timeout=15"
+# Direct connection (no "-pooler"), used by prisma migrate
+DIRECT_URL="postgresql://USER:PASSWORD@ep-xxx.eu-central-1.aws.neon.tech/neondb?sslmode=require&connect_timeout=15"
 ```
